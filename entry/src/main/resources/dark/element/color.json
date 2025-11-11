@@ -3,6 +3,38 @@
     {
       "name": "start_window_background",
       "value": "#000000"
+    },
+    {
+      "name": "dialog_background",
+      "value": "#2C2C2C"
+    },
+    {
+      "name": "dialog_shadow",
+      "value": "#80000000"
+    },
+    {
+      "name": "font_color_primary",
+      "value": "#E5E5E5"
+    },
+    {
+      "name": "font_color_placeholder",
+      "value": "#666666"
+    },
+    {
+      "name": "font_color_inverse",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "input_background",
+      "value": "#3A3A3A"
+    },
+    {
+      "name": "button_background_secondary",
+      "value": "#3A3A3A"
+    },
+    {
+      "name": "button_background_primary",
+      "value": "#007DFF"
     }
   ]
 }
