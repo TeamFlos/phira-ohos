@@ -11,9 +11,6 @@
     ],
     "requestPermissions": [
       {
-        "name": "ohos.permission.INTERCEPT_INPUT_EVENT"
-      },
-      {
         "name": "ohos.permission.INTERNET"
       }
     ],
@@ -31,7 +28,7 @@
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "orientation": "landscape",
-        "supportWindowMode": ["fullscreen"],
+        "supportWindowMode": ["fullscreen","split"],
 
         "skills": [
           {
