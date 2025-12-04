@@ -23,6 +23,16 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
     let windowClass: window.Window | undefined = undefined;
+    windowStage.getMainWindow((err: BusinessError, data) => {
+      let errCode: number = err.code;
+      if (errCode) {
+        console.error(`Failed to obtain the main window. CCode:${err.code}, message:${err.message}`);
+        return;
+      }
+      windowClass = data;
+      AppStorage.setOrCreate<number>('windowID', windowClass.getWindowProperties().id);
+      console.info(`Succeeded in obtaining the main window. Result:${data}`);
+    });
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));

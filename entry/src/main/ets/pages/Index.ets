@@ -114,12 +114,12 @@ struct Index {
   dialogController: CustomDialogController = new CustomDialogController({
     builder: InputDialog({
       onConfirm: (text: string) => {
-        this.xComponentContext.setInterceptorState(true);
+        this.xComponentContext.reRegisterEventFilters();
         this.xComponentContext.setInputText(text);
 
       },
       onCancel: () => {
-        this.xComponentContext.setInterceptorState(true);
+        this.xComponentContext.reRegisterEventFilters();
       }
     }),
     autoCancel: false,
@@ -132,6 +132,7 @@ struct Index {
       XComponent(this.xComponentAttrs)
         .onLoad((xComponentContext) => {
           this.xComponentContext = xComponentContext;
+          this.xComponentContext!.registerEventFilters(AppStorage.get<number>('windowID'))
           this.xComponentContext!.registerArktsCallback((arg: string) => {
             try {
               const command = JSON.parse(arg) as ArkTSCommand;
@@ -140,7 +141,7 @@ struct Index {
               }
               switch (command.action) {
                 case "show_input_window":
-                  this.xComponentContext!.setInterceptorState(false);
+                  this.xComponentContext!.unregisterEventFilters();
                   this.dialogController.open();
                   break;
                 case "openurl":
@@ -156,7 +157,7 @@ struct Index {
                 case "show_message":
                   const msg = command.payload?.message;
                   if (typeof msg === 'string') {
-                    this.xComponentContext!.setInterceptorState(false);
+                    this.xComponentContext!.unregisterEventFilters();
                     this.getUIContext().showAlertDialog({
                       title: 'phira',
                       message: msg,
@@ -167,7 +168,7 @@ struct Index {
                       buttons: [{
                         value: 'cancel',
                         action: () => {
-                          this.xComponentContext!.setInterceptorState(true);
+                          this.xComponentContext!.reRegisterEventFilters();
                         }
                       },
                         {
@@ -176,7 +177,7 @@ struct Index {
                           style: DialogButtonStyle.HIGHLIGHT,
                           value: 'ok',
                           action: () => {
-                            this.xComponentContext!.setInterceptorState(true);
+                            this.xComponentContext!.reRegisterEventFilters();
                           }
                         }],
                     });
