@@ -11,6 +11,9 @@
     ],
     "requestPermissions": [
       {
+        "name": "ohos.permission.INTERCEPT_INPUT_EVENT"
+      },
+      {
         "name": "ohos.permission.INTERNET"
       }
     ],
