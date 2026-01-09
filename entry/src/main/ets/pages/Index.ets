@@ -4,11 +4,12 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { JSON } from '@kit.ArkTS';
 import { picker } from '@kit.CoreFileKit';
 import fs from '@ohos.file.fs';
+import libhcmd from 'libhcmd.so';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import bundleManager from '@ohos.bundle.bundleManager';
+const DOMAIN = 0x0000;
+const TAG = 'Phira';
 
-interface ShowMessagePayload {
-  message: string;
-  title?: string;
-}
 interface ShowInputWindowCommand {
   action: "show_input_window";
 }
@@ -16,14 +17,20 @@ interface OpenUrlCommand {
   action: "openurl";
   payload: string;
 }
+interface HCommand {
+  action: "hcommand";
+  start: boolean;
+  payload: string;
+}
 interface ShowMessageCommand {
   action: "show_message";
-  payload: ShowMessagePayload;
+  message: string;
+  title: string;
 }
 interface ChooseFileCommand {
   action: "chooseFile";
 }
-type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand;
+type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand |HCommand;
 
 interface XComponentAttrs {
   id: string;
@@ -56,7 +63,8 @@ struct Index {
   }
   @State uri: string = 'Hello World';
   @State showInput: boolean = false;
-
+  @State bundleName: string = '';
+  @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
   async copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
     const tempDir = context.cacheDir;
     const tempFileName = `chart_${Date.now()}.zip`;
@@ -146,30 +154,59 @@ struct Index {
                 case "openurl":
                   const url = command.payload;
                   if (typeof url === 'string' && url) {
-                    const context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
-                    startBrowsableAbility(context, url);
+                    startBrowsableAbility(this.context, url);
                   }
                   break;
                 case "chooseFile":
                   this.callFilePickerAndProcess();
                   break;
+                case "hcommand":
+                  const hcmd = command.payload;
+                  const start = command.start;
+                  let bundleName = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION).appInfo.name;
+                  if(typeof hcmd === 'string' && hcmd ){
+                    let context = getContext(this) as common.UIAbilityContext;
+                    let filesToDelete = ["hdc.socket", "hdc.pid", "hdc.out", ".HDCServer.pid"];
+                    let workPath = context.tempDir + "/";
+                    try {
+                      if (start) {
+                        filesToDelete.forEach(fileName => {
+                          let filePath = workPath + fileName;
+                            if (fs.accessSync(filePath)) {
+                              fs.unlinkSync(filePath);
+                            }
+                        });
+                        libhcmd.hdcServer(workPath);
+                      }
+                      let outFilePath = workPath + "hdc.out";
+                      if (fs.accessSync(outFilePath)) {
+                        fs.unlinkSync(outFilePath);
+                      }
+                      libhcmd.hdcCmd(hcmd, workPath, (result: number | string) => {
+                          if (fs.accessSync(outFilePath)) {
+                            let content = fs.readTextSync(outFilePath);
+                            hilog.info(DOMAIN, TAG, 'hcommand result:%{public}s',content);
+                            this.xComponentContext!.hcmdRequestCallback(content,bundleName);
+                          }
+                      });
+                    } catch (error) {
+
+                    }
+                  }
+                  break;
                 case "show_message":
-                  const msg = command.payload?.message;
+                  const msg = command.message;
+                  const title = command.title;
                   if (typeof msg === 'string') {
                     this.xComponentContext!.setInterceptorState(false);
                     this.getUIContext().showAlertDialog({
-                      title: 'phira',
+                      title: title,
                       message: msg,
                       autoCancel: false,
                       alignment: DialogAlignment.Center,
                       offset: { dx: 0, dy: -20 },
                       gridCount: 3,
-                      buttons: [{
-                        value: 'cancel',
-                        action: () => {
-                          this.xComponentContext!.setInterceptorState(true);
-                        }
-                      },
+                      buttons: [
                         {
                           enabled: true,
                           defaultFocus: true,
@@ -177,6 +214,11 @@ struct Index {
                           value: 'ok',
                           action: () => {
                             this.xComponentContext!.setInterceptorState(true);
+                            try{
+                              this.context.terminateSelf();
+                            } catch (error) {
+
+                            }
                           }
                         }],
                     });

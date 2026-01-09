@@ -11,5 +11,5 @@
 **/.test
 /.appanalyzer
 **/resfile/assets/**
-libphira.so
+*.so
 /build-profile.json5

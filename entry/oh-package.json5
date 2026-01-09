@@ -6,7 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "libphira.so": "file:src/main/rs/libphira"
+    "libphira.so": "file:src/main/rs/libphira",
+    "libhcmd.so": "file:src/main/rs/libhcmd"
   },
 
 }
