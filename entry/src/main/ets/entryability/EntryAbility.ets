@@ -31,6 +31,18 @@ export default class EntryAbility extends UIAbility {
       }
       windowClass = data;
       AppStorage.setOrCreate<number>('windowID', windowClass.getWindowProperties().id);
+      try {
+        windowClass.setWindowKeepScreenOn(true, (err: BusinessError) => {
+          if (err.code) {
+            console.error('Failed to set the screen to be always on. Cause: ' + JSON.stringify(err));
+            return;
+          }
+          console.info('Succeeded in setting the screen to be always on.');
+        });
+      } catch (exception) {
+        console.error('Failed to set the screen to be always on. Cause: ' + JSON.stringify(exception));
+      }
+
       console.info(`Succeeded in obtaining the main window. Result:${data}`);
     });
     windowStage.loadContent('pages/Index', (err) => {
