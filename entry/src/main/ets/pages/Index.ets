@@ -105,7 +105,8 @@ struct Index {
     try {
       let documentPicker = new picker.DocumentViewPicker();
       let documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.fileSuffixFilters = ['.zip',];
+      documentSelectOptions.fileSuffixFilters = ['.zip','.pez'];
+      documentSelectOptions.maxSelectNumber = 1;
       const documentSelectResult = await documentPicker.select(documentSelectOptions);
       if (documentSelectResult && documentSelectResult.length > 0) {
         const uri = documentSelectResult[0];
