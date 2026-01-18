@@ -1,6 +1,6 @@
 import { InputDialog } from '../components/InputDialog';
 import { common, Want } from '@kit.AbilityKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import { BusinessError,deviceInfo } from '@kit.BasicServicesKit';
 import { JSON } from '@kit.ArkTS';
 import { picker } from '@kit.CoreFileKit';
 import fs from '@ohos.file.fs';
@@ -65,6 +65,38 @@ struct Index {
   @State showInput: boolean = false;
   @State bundleName: string = '';
   @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
+  @State systemInfo: string = '';
+  aboutToAppear(): void {
+    try {
+      let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+      let appBundleName = bundleInfo.name;
+      let deviceModel = deviceInfo.marketName;
+      let osVersion = deviceInfo.displayVersion;
+      let ReleaseType = deviceInfo.osReleaseType;
+      let cpuModel = deviceInfo.chipType || "Unknown CPU";
+      let performanceClassNum = deviceInfo.performanceClass;
+      let devicetype = deviceInfo.deviceType;
+      let performanceClassStr = "unknown";
+      switch(performanceClassNum){
+        case 0:
+          performanceClassStr = "HighLevel"
+          break;
+        case 1:
+          performanceClassStr = "MediumLevel"
+          break;
+        case 2:
+          performanceClassStr = "LowLevel"
+          break;
+        default :
+          performanceClassStr = "unknown"
+      }
+      this.systemInfo = `${deviceModel}(${devicetype}) ${osVersion} (${ReleaseType}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
+    } catch (error) {
+      console.error("Failed to get system info: " + JSON.stringify(error));
+      this.systemInfo = "Debug Info Load Failed";
+    }
+  }
+
   async copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
     const tempDir = context.cacheDir;
     const tempFileName = `chart_${Date.now()}.zip`;
@@ -237,6 +269,20 @@ struct Index {
         .focusable(true)
         .defaultFocus(true)
         .constraintSize({ maxWidth: '100%', maxHeight: '100%' })
+      Text(this.systemInfo+"   Phira Internal ver.")
+        .fontSize(13)
+        .fontColor(Color.White)
+        .textShadow({
+          radius: 2,
+          color: Color.Black,
+          offsetX: 1,
+          offsetY: 1
+        })
+        .textAlign(TextAlign.End)
+        .position({ x: '100%', y: "100%" })
+        .markAnchor({ x: '100%', y: "100%" })
+        .margin({ right: 15, bottom: 15 })
+        .hitTestBehavior(HitTestMode.None)
     }
     .height('100%')
   }
