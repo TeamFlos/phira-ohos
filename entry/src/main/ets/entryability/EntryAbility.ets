@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window } from '@kit.ArkUI';
+import { window,display } from '@kit.ArkUI';
+import { deviceInfo } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
 const DOMAIN = 0x0000;
@@ -17,6 +18,64 @@ export default class EntryAbility extends UIAbility {
 
   onDestroy(): void {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
+    try {
+      display.off('foldStatusChange');
+      display.off('change');
+    } catch (err) {
+    }
+  }
+
+  private async adjustWindowForFoldablePC(win: window.Window): Promise<void> {
+    if (!win) {
+      return;
+    }
+    try {
+      const isFoldable = display.isFoldable();
+      if (!isFoldable) {
+        hilog.info(DOMAIN, 'testTag', '[FoldAdapt] Not a foldable device, skip');
+        return;
+      }
+      const foldStatus = display.getFoldStatus();
+      hilog.info(DOMAIN, 'testTag', '[FoldAdapt] Current foldStatus: %{public}d', foldStatus);
+      const allDisplays = await display.getAllDisplays();
+      const defaultDisplay = display.getDefaultDisplaySync();
+      const rotation = defaultDisplay.rotation;
+      hilog.info(DOMAIN, 'testTag', '[FoldAdapt] Screen rotation: %{public}d', rotation);
+      if (rotation !== 0) {
+        hilog.info(DOMAIN, 'testTag', '[FoldAdapt] Not portrait mode, skip. Rotation: %{public}d', rotation);
+        return;
+      }
+      hilog.info(DOMAIN, 'testTag', '[FoldAdapt] allDisplays.length: %{public}d', allDisplays.length);
+      if (allDisplays.length >= 2) {
+        hilog.info(DOMAIN, 'testTag', '[FoldAdapt] Half-folded with dual screens, moving ...');
+        const moveConfig: window.MoveConfiguration = {
+          displayId: 0
+        };
+        await win.moveWindowToGlobal(0, 0, moveConfig);
+      }
+    } catch (err) {
+      hilog.error(DOMAIN, 'testTag', '[FoldAdapt] Error: %{public}s', JSON.stringify(err));
+    }
+  }
+
+  private initFoldStatusListener(data:window.Window): void {
+    try {
+      const isFoldable = display.isFoldable();
+      if (!isFoldable || '2in1' !== deviceInfo.deviceType) {
+        return;
+      }
+      display.on('foldStatusChange', (foldStatus: display.FoldStatus) => {
+        hilog.info(DOMAIN, 'testTag', '[FoldListener] foldStatusChange: %{public}d', foldStatus);
+        this.adjustWindowForFoldablePC(data);
+      });
+      display.on('change', (displayId: number) => {
+        hilog.info(DOMAIN, 'testTag', '[FoldListener] display change, displayId: %{public}d', displayId);
+        this.adjustWindowForFoldablePC(data);
+      });
+      this.adjustWindowForFoldablePC(data);
+    } catch (err) {
+      hilog.error(DOMAIN, 'testTag', '[FoldListener] Init error: %{public}s', JSON.stringify(err));
+    }
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
@@ -49,6 +108,7 @@ export default class EntryAbility extends UIAbility {
       }
 
       console.info(`Succeeded in obtaining the main window. Result:${data}`);
+      this.initFoldStatusListener(data);
     });
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
