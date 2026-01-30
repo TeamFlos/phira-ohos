@@ -72,7 +72,7 @@ struct Index {
       let appBundleName = bundleInfo.name;
       let deviceModel = deviceInfo.marketName;
       let osVersion = deviceInfo.displayVersion;
-      let ReleaseType = deviceInfo.osReleaseType;
+      let sdkApi = deviceInfo.sdkApiVersion;
       let cpuModel = deviceInfo.chipType || "Unknown CPU";
       let performanceClassNum = deviceInfo.performanceClass;
       let devicetype = deviceInfo.deviceType;
@@ -90,7 +90,7 @@ struct Index {
         default :
           performanceClassStr = "unknown"
       }
-      this.systemInfo = `${deviceModel}(${devicetype}) ${osVersion} (${ReleaseType}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
+      this.systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
     } catch (error) {
       console.error("Failed to get system info: " + JSON.stringify(error));
       this.systemInfo = "Debug Info Load Failed";
@@ -279,8 +279,8 @@ struct Index {
           offsetY: 1
         })
         .textAlign(TextAlign.End)
-        .position({ x: '100%', y: "100%" })
-        .markAnchor({ x: '100%', y: "100%" })
+        .position({ x: '0%', y: "100%" })
+        .markAnchor({ x: '0%', y: "100%" })
         .margin({ right: 15, bottom: 15 })
         .hitTestBehavior(HitTestMode.None)
     }
