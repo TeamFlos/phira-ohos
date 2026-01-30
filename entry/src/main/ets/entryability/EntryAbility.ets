@@ -24,6 +24,11 @@ export default class EntryAbility extends UIAbility {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
     let windowClass: window.Window | undefined = undefined;
     windowStage.getMainWindow((err: BusinessError, data) => {
+      try{
+        data?.setWindowDecorVisible(false);
+      }catch (exception){
+        console.error(`Failed to setWindowDecorVisible. Cause code: ${exception.code}, message: ${exception.message}`);
+      }
       let errCode: number = err.code;
       if (errCode) {
         console.error(`Failed to obtain the main window. CCode:${err.code}, message:${err.message}`);
