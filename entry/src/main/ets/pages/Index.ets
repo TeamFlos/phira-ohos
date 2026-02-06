@@ -95,6 +95,7 @@ struct Index {
       console.error("Failed to get system info: " + JSON.stringify(error));
       this.systemInfo = "Debug Info Load Failed";
     }
+    console.error("system info:" + this.systemInfo);
   }
 
   async copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
@@ -269,7 +270,7 @@ struct Index {
         .focusable(true)
         .defaultFocus(true)
         .constraintSize({ maxWidth: '100%', maxHeight: '100%' })
-      Text(this.systemInfo+"   Phira Internal ver.")
+      /*Text(this.systemInfo+"   Phira Internal ver.")
         .fontSize(13)
         .fontColor(Color.White)
         .textShadow({
@@ -282,7 +283,7 @@ struct Index {
         .position({ x: '0%', y: "100%" })
         .markAnchor({ x: '0%', y: "100%" })
         .margin({ right: 15, bottom: 15 })
-        .hitTestBehavior(HitTestMode.None)
+        .hitTestBehavior(HitTestMode.None)*/
     }
     .height('100%')
   }
