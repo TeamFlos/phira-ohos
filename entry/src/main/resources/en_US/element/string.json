@@ -14,27 +14,27 @@
     },
     {
       "name": "input_dialog_title_password",
-      "value": "请输入密码"
+      "value": "Enter Password"
     },
     {
       "name": "input_dialog_title_content",
-      "value": "请输入内容"
+      "value": "Enter Content"
     },
     {
       "name": "input_dialog_placeholder_password",
-      "value": "输入密码..."
+      "value": "Enter your password..."
     },
     {
       "name": "input_dialog_placeholder_content",
-      "value": "输入内容..."
+      "value": "Enter content..."
     },
     {
       "name": "button_cancel",
-      "value": "取消"
+      "value": "Cancel"
     },
     {
       "name": "button_confirm",
-      "value": "确定"
+      "value": "Confirm"
     }
   ]
 }

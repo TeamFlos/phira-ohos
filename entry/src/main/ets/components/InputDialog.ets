@@ -8,13 +8,13 @@ export struct InputDialog {
 
   build() {
     Column() {
-      Text(this.isPassword ? '请输入密码' : '请输入内容')
+      Text(this.isPassword ? $r('app.string.input_dialog_title_password') : $r('app.string.input_dialog_title_content'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .margin({ top: 20, bottom: 15 })
         .fontColor($r('app.color.font_color_primary'))
 
-      TextInput({ placeholder: this.isPassword ? 'input your password...' : 'input your word...' })
+      TextInput({ placeholder: this.isPassword ? $r('app.string.input_dialog_placeholder_password') : $r('app.string.input_dialog_placeholder_content') })
         .type(this.isPassword ? InputType.Password : InputType.Normal)
         .backgroundColor($r('app.color.input_background'))
         .placeholderColor($r('app.color.font_color_placeholder'))
@@ -28,7 +28,7 @@ export struct InputDialog {
         })
 
       Row() {
-        Button('取消')
+        Button($r('app.string.button_cancel'))
           .onClick(() => {
             this.onCancel();
             this.controller.close();
@@ -39,7 +39,7 @@ export struct InputDialog {
           .height('100%')
 
 
-        Button('确定')
+        Button($r('app.string.button_confirm'))
           .onClick(() => {
             this.onConfirm(this.inputText);
             this.controller.close();
