@@ -1,0 +1,109 @@
+import { common, Want } from '@kit.AbilityKit';
+import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
+import bundleManager from '@ohos.bundle.bundleManager';
+import { JSON } from '@kit.ArkTS';
+import { picker } from '@kit.CoreFileKit';
+import fs from '@ohos.file.fs';
+
+export function startBrowsableAbility(context: common.UIAbilityContext, url: string): void {
+  let want: Want = {
+    action: 'ohos.want.action.viewData',
+    entities: ['entity.system.browsable'],
+    uri: url,
+    parameters: {
+      'ohos.ability.params.showDefaultPicker': true
+    }
+  };
+  context.startAbility(want).catch((err: BusinessError) => {
+    console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
+  });
+}
+
+export function getSystemInfo(): string {
+  try {
+    let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+    let appBundleName = bundleInfo.name;
+    let deviceModel = deviceInfo.marketName;
+    let osVersion = deviceInfo.displayVersion;
+    let sdkApi = deviceInfo.sdkApiVersion;
+    let cpuModel = deviceInfo.chipType || "Unknown CPU";
+    let performanceClassNum = deviceInfo.performanceClass;
+    let devicetype = deviceInfo.deviceType;
+    let performanceClassStr = "unknown";
+    switch (performanceClassNum) {
+      case 0:
+        performanceClassStr = "HighLevel";
+        break;
+      case 1:
+        performanceClassStr = "MediumLevel";
+        break;
+      case 2:
+        performanceClassStr = "LowLevel";
+        break;
+      default:
+        performanceClassStr = "unknown";
+    }
+    const systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
+    console.error("system info:" + systemInfo);
+    return systemInfo;
+  } catch (error) {
+    console.error("Failed to get system info: " + JSON.stringify(error));
+    return "Debug Info Load Failed";
+  }
+}
+
+export async function copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
+  const tempDir = context.cacheDir;
+  const tempFileName = `chart_${Date.now()}.zip`;
+  const tempFilePath = `${tempDir}/${tempFileName}`;
+  let sourceFd: number = -1;
+  let destFd: number = -1;
+  try {
+    const sourceFile = await fs.open(sourceUri, fs.OpenMode.READ_ONLY);
+    sourceFd = sourceFile.fd;
+    const destFile = await fs.open(tempFilePath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+    destFd = destFile.fd;
+    const bufferSize = 4096;
+    let buffer = new ArrayBuffer(bufferSize);
+    let bytesRead = 0;
+    do {
+      bytesRead = await fs.read(sourceFd, buffer);
+      if (bytesRead > 0) {
+        await fs.write(destFd, buffer, { length: bytesRead });
+      }
+    } while (bytesRead > 0);
+    return tempFilePath;
+  } catch (err) {
+    const error = err as BusinessError;
+    console.error(`copy file error: ${error.code}, ${error.message}`);
+    return undefined;
+  } finally {
+    if (sourceFd !== -1) {
+      await fs.close(sourceFd);
+    }
+    if (destFd !== -1) {
+      await fs.close(destFd);
+    }
+  }
+}
+
+export async function callFilePickerAndProcess(
+  xComponentContext: ESObject,
+  context: common.UIAbilityContext
+): Promise<void> {
+  try {
+    let documentPicker = new picker.DocumentViewPicker();
+    let documentSelectOptions = new picker.DocumentSelectOptions();
+    documentSelectOptions.fileSuffixFilters = ['.pez','.zip'];
+    documentSelectOptions.maxSelectNumber = 1;
+    const documentSelectResult = await documentPicker.select(documentSelectOptions);
+    if (documentSelectResult && documentSelectResult.length > 0) {
+      const uri = documentSelectResult[0];
+      const localPath = await copyUriToTempFile(context, uri);
+      xComponentContext!.setChosenFile(localPath);
+    }
+  } catch (err) {
+    const error = err as BusinessError;
+    console.error(`error: ${error.code}, ${error.message}`);
+  }
+}

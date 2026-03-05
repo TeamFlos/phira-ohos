@@ -1,10 +1,7 @@
 import { InputDialog } from '../components/InputDialog';
-import { common, Want } from '@kit.AbilityKit';
-import { BusinessError,deviceInfo } from '@kit.BasicServicesKit';
-import { JSON } from '@kit.ArkTS';
-import { picker } from '@kit.CoreFileKit';
-import fs from '@ohos.file.fs';
-import bundleManager from '@ohos.bundle.bundleManager';
+import { startBrowsableAbility, getSystemInfo, callFilePickerAndProcess } from '../utils/AbilityUtils';
+import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 interface ShowInputWindowCommand {
   action: "show_input_window";
@@ -30,20 +27,6 @@ interface XComponentAttrs {
   libraryname: string;
 }
 
-function startBrowsableAbility(context: common.UIAbilityContext,url:string): void {
-  let want: Want = {
-    action: 'ohos.want.action.viewData',
-    entities: ['entity.system.browsable'],
-    uri: url,
-    parameters: {
-      'ohos.ability.params.showDefaultPicker': true
-    }
-  };
-  context.startAbility(want).catch((err: BusinessError) => {
-      console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
-    });
-}
-
 @Entry
 @Component
 struct Index {
@@ -53,96 +36,10 @@ struct Index {
     type: XComponentType.SURFACE,
     libraryname: 'phira'
   }
-  @State uri: string = 'Hello World';
   @State showInput: boolean = false;
-  @State bundleName: string = '';
   @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
-  @State systemInfo: string = '';
   aboutToAppear(): void {
-    try {
-      let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
-      let appBundleName = bundleInfo.name;
-      let deviceModel = deviceInfo.marketName;
-      let osVersion = deviceInfo.displayVersion;
-      let sdkApi = deviceInfo.sdkApiVersion;
-      let cpuModel = deviceInfo.chipType || "Unknown CPU";
-      let performanceClassNum = deviceInfo.performanceClass;
-      let devicetype = deviceInfo.deviceType;
-      let performanceClassStr = "unknown";
-      switch(performanceClassNum){
-        case 0:
-          performanceClassStr = "HighLevel"
-          break;
-        case 1:
-          performanceClassStr = "MediumLevel"
-          break;
-        case 2:
-          performanceClassStr = "LowLevel"
-          break;
-        default :
-          performanceClassStr = "unknown"
-      }
-      this.systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
-    } catch (error) {
-      console.error("Failed to get system info: " + JSON.stringify(error));
-      this.systemInfo = "Debug Info Load Failed";
-    }
-    console.error("system info:" + this.systemInfo);
-  }
-
-  async copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
-    const tempDir = context.cacheDir;
-    const tempFileName = `chart_${Date.now()}.zip`;
-    const tempFilePath = `${tempDir}/${tempFileName}`;
-    let sourceFd: number = -1;
-    let destFd: number = -1;
-    try {
-      const sourceFile = await fs.open(sourceUri, fs.OpenMode.READ_ONLY);
-      sourceFd = sourceFile.fd;
-      const destFile = await fs.open(tempFilePath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
-      destFd = destFile.fd;
-      const bufferSize = 4096;
-      let buffer = new ArrayBuffer(bufferSize);
-      let bytesRead = 0;
-      do {
-        bytesRead = await fs.read(sourceFd, buffer);
-        if (bytesRead > 0) {
-          await fs.write(destFd, buffer, { length: bytesRead });
-        }
-      } while (bytesRead > 0);
-      return tempFilePath;
-    } catch (err) {
-      const error = err as BusinessError;
-      console.error(`copy file error: ${error.code}, ${error.message}`);
-      return undefined;
-    } finally {
-      if (sourceFd !== -1) {
-        await fs.close(sourceFd);
-      }
-      if (destFd !== -1) {
-        await fs.close(destFd);
-      }
-    }
-  }
-
-
-  async callFilePickerAndProcess() {
-    try {
-      let documentPicker = new picker.DocumentViewPicker();
-      let documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.fileSuffixFilters = ['.pez','.zip'];
-      documentSelectOptions.maxSelectNumber = 1;
-      const documentSelectResult = await documentPicker.select(documentSelectOptions);
-      if (documentSelectResult && documentSelectResult.length > 0) {
-        const uri = documentSelectResult[0];
-        const context = getContext(this) as common.UIAbilityContext;
-        const localPath = await this.copyUriToTempFile(context, uri);
-        this.xComponentContext!.setChosenFile(localPath);
-      }
-    } catch (err) {
-      const error = err as BusinessError;
-      console.error(`error: ${error.code}, ${error.message}`);
-    }
+    console.log("system info:" + getSystemInfo());
   }
 
   private isPasswordInput: boolean = false;
@@ -153,7 +50,6 @@ struct Index {
       onConfirm: (text: string) => {
         this.xComponentContext.setInterceptorState(true);
         this.xComponentContext.setInputText(text);
-
       },
       onCancel: () => {
         this.xComponentContext.setInterceptorState(true);
@@ -188,7 +84,7 @@ struct Index {
                   }
                   break;
                 case "chooseFile":
-                  this.callFilePickerAndProcess();
+                  callFilePickerAndProcess(this.xComponentContext, this.context);
                   break;
                 default:
                   break;
@@ -201,20 +97,6 @@ struct Index {
         .focusable(true)
         .defaultFocus(true)
         .constraintSize({ maxWidth: '100%', maxHeight: '100%' })
-      /*Text(this.systemInfo+"   Phira Internal ver.")
-        .fontSize(13)
-        .fontColor(Color.White)
-        .textShadow({
-          radius: 2,
-          color: Color.Black,
-          offsetX: 1,
-          offsetY: 1
-        })
-        .textAlign(TextAlign.End)
-        .position({ x: '0%', y: "100%" })
-        .markAnchor({ x: '0%', y: "100%" })
-        .margin({ right: 15, bottom: 15 })
-        .hitTestBehavior(HitTestMode.None)*/
     }
     .height('100%')
   }
