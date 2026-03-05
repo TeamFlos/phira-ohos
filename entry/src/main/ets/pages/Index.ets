@@ -8,6 +8,7 @@ import bundleManager from '@ohos.bundle.bundleManager';
 
 interface ShowInputWindowCommand {
   action: "show_input_window";
+  isPassword: boolean;
 }
 interface OpenUrlCommand {
   action: "openurl";
@@ -144,8 +145,11 @@ struct Index {
     }
   }
 
+  private isPasswordInput: boolean = false;
+
   dialogController: CustomDialogController = new CustomDialogController({
     builder: InputDialog({
+      isPassword: this.isPasswordInput,
       onConfirm: (text: string) => {
         this.xComponentContext.setInterceptorState(true);
         this.xComponentContext.setInputText(text);
@@ -173,6 +177,7 @@ struct Index {
               }
               switch (command.action) {
                 case "show_input_window":
+                  this.isPasswordInput = command.isPassword ?? false;
                   this.xComponentContext!.setInterceptorState(false);
                   this.dialogController.open();
                   break;

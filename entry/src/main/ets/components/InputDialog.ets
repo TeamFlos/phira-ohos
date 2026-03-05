@@ -3,17 +3,19 @@ export struct InputDialog {
   controller: CustomDialogController;
   onConfirm: (text: string) => void = () => {};
   onCancel: () => void = () => {};
+  isPassword: boolean = false;
   @State private inputText: string = '';
 
   build() {
     Column() {
-      Text('请输入内容')
+      Text(this.isPassword ? '请输入密码' : '请输入内容')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .margin({ top: 20, bottom: 15 })
         .fontColor($r('app.color.font_color_primary'))
 
-      TextInput({ placeholder: 'input your word...' })
+      TextInput({ placeholder: this.isPassword ? 'input your password...' : 'input your word...' })
+        .type(this.isPassword ? InputType.Password : InputType.Normal)
         .backgroundColor($r('app.color.input_background'))
         .placeholderColor($r('app.color.font_color_placeholder'))
         .fontColor($r('app.color.font_color_primary'))
