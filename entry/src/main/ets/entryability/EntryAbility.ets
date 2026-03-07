@@ -1,7 +1,8 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window,display } from '@kit.ArkUI';
+import { window, display } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { copyUriToTempFile } from '../utils/AbilityUtils';
 
 const DOMAIN = 0x0000;
 const TAG = "Phira-ohos";
@@ -13,6 +14,29 @@ export default class EntryAbility extends UIAbility {
       hilog.error(DOMAIN, TAG, 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
     hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onCreate');
+    this.handleWant(want);
+  }
+
+  onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    hilog.info(DOMAIN, TAG, '%{public}s', 'Ability onNewWant');
+    this.handleWant(want);
+  }
+
+  private async handleWant(want: Want): Promise<void> {
+    if (want.uri) {
+      hilog.info(DOMAIN, TAG, 'Received file URI: %{public}s', want.uri);
+      try {
+        const tempFilePath = await copyUriToTempFile(this.context, want.uri);
+        if (tempFilePath) {
+          AppStorage.setOrCreate('pendingImportFile', tempFilePath);
+          hilog.info(DOMAIN, TAG, 'Saved pending import file: %{public}s', tempFilePath);
+        } else {
+          hilog.error(DOMAIN, TAG, 'Failed to copy file to temp directory');
+        }
+      } catch (err) {
+        hilog.error(DOMAIN, TAG, 'Failed to handle file import. Cause: %{public}s', JSON.stringify(err));
+      }
+    }
   }
 
   onDestroy(): void {

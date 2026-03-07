@@ -33,15 +33,26 @@
         "exported": true,
         "orientation": "landscape",
         "supportWindowMode": ["fullscreen","split"],
-
         "skills": [
           {
             "entities": [
               "entity.system.home"
             ],
             "actions": [
-              "ohos.want.action.home"
+              "action.system.home",
+              "ohos.want.action.home",
+              "ohos.want.action.viewData",
+              "ohos.want.action.sendData"
+            ],
+            "uris": [
+              {
+                "scheme": "file",
+                "utd": "general.text",
+                "linkFeature": "FileOpen",
+                "maxFileSupported": 1
+              }
             ]
+
           }
         ],
 
