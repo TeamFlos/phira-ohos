@@ -21,3 +21,4 @@
 -enable-toplevel-obfuscation
 -enable-filename-obfuscation
 -enable-export-obfuscation
+-enable-bytecode-obfuscation
