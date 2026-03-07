@@ -18,6 +18,7 @@ interface ShowMessageCommand {
 }
 interface ChooseFileCommand {
   action: "chooseFile";
+  isPhoto: boolean;
 }
 type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand;
 
@@ -84,7 +85,7 @@ struct Index {
                   }
                   break;
                 case "chooseFile":
-                  callFilePickerAndProcess(this.xComponentContext, this.context);
+                  callFilePickerAndProcess(this.xComponentContext, this.context, command.isPhoto);
                   break;
                 default:
                   break;

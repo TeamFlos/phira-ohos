@@ -89,21 +89,45 @@ export async function copyUriToTempFile(context: common.UIAbilityContext, source
 
 export async function callFilePickerAndProcess(
   xComponentContext: ESObject,
-  context: common.UIAbilityContext
+  context: common.UIAbilityContext,
+  isPhoto: boolean = false
 ): Promise<void> {
   try {
-    let documentPicker = new picker.DocumentViewPicker();
-    let documentSelectOptions = new picker.DocumentSelectOptions();
-    documentSelectOptions.fileSuffixFilters = ['.pez','.zip'];
-    documentSelectOptions.maxSelectNumber = 1;
-    const documentSelectResult = await documentPicker.select(documentSelectOptions);
-    if (documentSelectResult && documentSelectResult.length > 0) {
-      const uri = documentSelectResult[0];
-      const localPath = await copyUriToTempFile(context, uri);
-      xComponentContext!.setChosenFile(localPath);
+    if (isPhoto) {
+      let photoPicker = new picker.PhotoViewPicker();
+      let photoSelectOptions = new picker.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = picker.PhotoViewMIMETypes.IMAGE_TYPE;
+      photoSelectOptions.maxSelectNumber = 1;
+      const photoSelectResult = await photoPicker.select(photoSelectOptions);
+      if (photoSelectResult && photoSelectResult.photoUris.length > 0) {
+        const uri = photoSelectResult.photoUris[0];
+        const localPath = await copyUriToTempFile(context, uri);
+        xComponentContext!.setChosenFile(localPath);
+      }
+    } else {
+      let documentPicker = new picker.DocumentViewPicker();
+      let documentSelectOptions = new picker.DocumentSelectOptions();
+      documentSelectOptions.fileSuffixFilters = ['.pez','.zip'];
+      documentSelectOptions.maxSelectNumber = 1;
+      const documentSelectResult = await documentPicker.select(documentSelectOptions);
+      if (documentSelectResult && documentSelectResult.length > 0) {
+        const uri = documentSelectResult[0];
+        const localPath = await copyUriToTempFile(context, uri);
+        xComponentContext!.setChosenFile(localPath);
+      }
     }
   } catch (err) {
     const error = err as BusinessError;
     console.error(`error: ${error.code}, ${error.message}`);
+  }
+}
+
+export async function isDebugVersion(): Promise<boolean> {
+  try {
+    const bundleInfo = await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+    return bundleInfo.appInfo.appProvisionType === 'debug';
+  } catch (err) {
+    console.error(`Failed to get bundle info: ${err.message}`);
+    return false;
   }
 }
