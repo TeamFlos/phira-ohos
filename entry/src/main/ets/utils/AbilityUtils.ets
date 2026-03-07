@@ -4,6 +4,7 @@ import bundleManager from '@ohos.bundle.bundleManager';
 import { JSON } from '@kit.ArkTS';
 import { picker } from '@kit.CoreFileKit';
 import fs from '@ohos.file.fs';
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
 
 export function startBrowsableAbility(context: common.UIAbilityContext, url: string): void {
   let want: Want = {
@@ -53,36 +54,23 @@ export function getSystemInfo(): string {
 }
 
 export async function copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
-  const tempDir = context.cacheDir;
-  const tempFileName = `chart_${Date.now()}.zip`;
-  const tempFilePath = `${tempDir}/${tempFileName}`;
-  let sourceFd: number = -1;
-  let destFd: number = -1;
+  const tempFilePath = `${context.cacheDir}/temp_${Date.now()}`;
+  let sourceFile: fs.File | null = null;
   try {
-    const sourceFile = await fs.open(sourceUri, fs.OpenMode.READ_ONLY);
-    sourceFd = sourceFile.fd;
-    const destFile = await fs.open(tempFilePath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
-    destFd = destFile.fd;
-    const bufferSize = 4096;
-    let buffer = new ArrayBuffer(bufferSize);
-    let bytesRead = 0;
-    do {
-      bytesRead = await fs.read(sourceFd, buffer);
-      if (bytesRead > 0) {
-        await fs.write(destFd, buffer, { length: bytesRead });
-      }
-    } while (bytesRead > 0);
+    sourceFile = await fs.open(sourceUri, fs.OpenMode.READ_ONLY);
+    await fs.copyFile(sourceFile.fd, tempFilePath);
     return tempFilePath;
   } catch (err) {
     const error = err as BusinessError;
     console.error(`copy file error: ${error.code}, ${error.message}`);
     return undefined;
   } finally {
-    if (sourceFd !== -1) {
-      await fs.close(sourceFd);
-    }
-    if (destFd !== -1) {
-      await fs.close(destFd);
+    if (sourceFile) {
+      try {
+        await fs.close(sourceFile);
+      } catch (err) {
+        console.error(`Failed to close file: ${(err as BusinessError).message}`);
+      }
     }
   }
 }
@@ -94,12 +82,12 @@ export async function callFilePickerAndProcess(
 ): Promise<void> {
   try {
     if (isPhoto) {
-      let photoPicker = new picker.PhotoViewPicker();
-      let photoSelectOptions = new picker.PhotoSelectOptions();
-      photoSelectOptions.MIMEType = picker.PhotoViewMIMETypes.IMAGE_TYPE;
+      let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
       photoSelectOptions.maxSelectNumber = 1;
+      let photoPicker = new photoAccessHelper.PhotoViewPicker();
       const photoSelectResult = await photoPicker.select(photoSelectOptions);
-      if (photoSelectResult && photoSelectResult.photoUris.length > 0) {
+      if (photoSelectResult && photoSelectResult.photoUris && photoSelectResult.photoUris.length > 0) {
         const uri = photoSelectResult.photoUris[0];
         const localPath = await copyUriToTempFile(context, uri);
         xComponentContext!.setChosenFile(localPath);
