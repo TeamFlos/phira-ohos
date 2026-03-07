@@ -35,6 +35,10 @@
     {
       "name": "button_confirm",
       "value": "确定"
+    },
+    {
+      "name": "permission_reason_intercept_input",
+      "value": "用于捕获触摸和按键等输入事件，并传递至游戏渲染引擎以实现游戏交互操作"
     }
   ]
 }

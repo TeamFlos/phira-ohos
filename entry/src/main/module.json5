@@ -11,7 +11,8 @@
     ],
     "requestPermissions": [
       {
-        "name": "ohos.permission.INTERCEPT_INPUT_EVENT"
+        "name": "ohos.permission.INTERCEPT_INPUT_EVENT",
+        "reason": "$string:permission_reason_intercept_input"
       },
       {
         "name": "ohos.permission.INTERNET"

@@ -35,6 +35,10 @@
     {
       "name": "button_confirm",
       "value": "Confirm"
+    },
+    {
+      "name": "permission_reason_intercept_input",
+      "value": "Used to capture touch and key input events and forward them to the game rendering engine for gameplay interaction"
     }
   ]
 }
