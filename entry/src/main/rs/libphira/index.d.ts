@@ -5,8 +5,6 @@ export declare function registerArktsCallback(callback: (arg: string) => void): 
 
 export declare function setInterceptorState(state: boolean): boolean
 
-export declare function hcmdRequestCallback(response: string, currentPkg: string): void
-
 export declare function markImport(): void
 
 export declare function markImportRespack(): void
