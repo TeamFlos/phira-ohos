@@ -7,7 +7,7 @@ import {
 } from '../utils/AbilityUtils';
 import { common } from '@kit.AbilityKit';
 import { InputBoxRequest, InputBoxResponse } from 'libphira.so';
-ce ShowInputWindowCommand {
+interface ShowInputWindowCommand {
   action: "show_input_window";
   isPassword: boolean;
 }
