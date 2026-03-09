@@ -1,8 +1,13 @@
 import { InputDialog } from '../components/InputDialog';
-import { startBrowsableAbility, getSystemInfo, callFilePickerAndProcess } from '../utils/AbilityUtils';
+import {
+  callFilePickerAndProcess,
+  callFilePickerSaveFile,
+  getSystemInfo,
+  startBrowsableAbility
+} from '../utils/AbilityUtils';
 import { common } from '@kit.AbilityKit';
-
-interface ShowInputWindowCommand {
+import { InputBoxRequest, InputBoxResponse } from 'libphira.so';
+ce ShowInputWindowCommand {
   action: "show_input_window";
   isPassword: boolean;
 }
@@ -19,7 +24,14 @@ interface ChooseFileCommand {
   action: "chooseFile";
   isPhoto: boolean;
 }
-type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand;
+
+interface RequestExportCommand {
+  action: "request_export";
+  filename: string;
+}
+
+type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand
+  | RequestExportCommand;
 
 interface XComponentAttrs {
   id: string;
@@ -39,12 +51,12 @@ struct Index {
   @State showInput: boolean = false;
   @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
   @StorageLink('pendingImportFile') @Watch('onPendingImportChange') pendingImportFile: string = '';
+  @State currentRequest: InputBoxRequest | null = null;
+  private inputDialogController: CustomDialogController | null = null;
 
   aboutToAppear(): void {
     console.log("system info:" + getSystemInfo());
   }
-
-  private isPasswordInput: boolean = false;
 
   onPendingImportChange(): void {
     if (this.xComponentContext && this.pendingImportFile) {
@@ -52,37 +64,52 @@ struct Index {
     }
   }
 
-  private processPendingImport(): void {
-    const pendingFile = AppStorage.get<string>('pendingImportFile');
-    if (pendingFile && this.xComponentContext) {
-      console.info('Processing pending import file: ' + pendingFile);
-      this.xComponentContext.setChosenFile(pendingFile);
-      this.xComponentContext.markImport();
-      AppStorage.set('pendingImportFile', '');
-    }
-  }
+  showInputDialog(request: InputBoxRequest): void {
+    this.currentRequest = request;
+    this.inputDialogController = new CustomDialogController({
+      builder: InputDialog({
+        title: request.title,
+        prompt: request.prompt,
+        defaultValue: request.defaultValue,
+        mode: request.mode,
+        okLabel: request.okLabel,
+        cancelLabel: request.cancelLabel,
+        onConfirm: (text: string) => {
+          const response: InputBoxResponse = {
+            callback: request.callback,
+            text: text
+          };
+          this.xComponentContext.setInterceptorState(true);
+          this.xComponentContext!.onInputboxResponse(response);
+          this.inputDialogController = null;
+        },
+        onCancel: () => {
+          const response: InputBoxResponse = {
+            callback: request.callback,
+            text: undefined
+          };
+          this.xComponentContext.setInterceptorState(true);
+          this.xComponentContext!.onInputboxResponse(response);
+          this.inputDialogController = null;
+        }
+      }),
+      autoCancel: false,
+      alignment: DialogAlignment.Center,
+      customStyle: true
+    });
 
-  dialogController: CustomDialogController = new CustomDialogController({
-    builder: InputDialog({
-      isPassword: this.isPasswordInput,
-      onConfirm: (text: string) => {
-        this.xComponentContext.setInterceptorState(true);
-        this.xComponentContext.setInputText(text);
-      },
-      onCancel: () => {
-        this.xComponentContext.setInterceptorState(true);
-      }
-    }),
-    autoCancel: false,
-    alignment: DialogAlignment.Center,
-    customStyle: true
-  });
+    this.inputDialogController.open();
+  }
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
       XComponent(this.xComponentAttrs)
         .onLoad((xComponentContext) => {
           this.xComponentContext = xComponentContext;
+          this.xComponentContext!.registerInputboxCallback((request: InputBoxRequest) => {
+            this.xComponentContext.setInterceptorState(false);
+            this.showInputDialog(request);
+          });
           this.xComponentContext!.registerArktsCallback((arg: string) => {
             try {
               const command = JSON.parse(arg) as ArkTSCommand;
@@ -90,11 +117,6 @@ struct Index {
                 return;
               }
               switch (command.action) {
-                case "show_input_window":
-                  this.isPasswordInput = command.isPassword ?? false;
-                  this.xComponentContext!.setInterceptorState(false);
-                  this.dialogController.open();
-                  break;
                 case "openurl":
                   const url = command.payload;
                   if (typeof url === 'string' && url) {
@@ -103,6 +125,18 @@ struct Index {
                   break;
                 case "chooseFile":
                   callFilePickerAndProcess(this.xComponentContext, this.context, command.isPhoto);
+                  break;
+                case "request_export":
+                  const filename = command.filename;
+                  if (typeof filename === 'string' && filename) {
+                    callFilePickerSaveFile(filename).then((result) => {
+                      if (result) {
+                        this.xComponentContext!.processExportFdOhos(result.fd);
+                      } else {
+                        console.log('request_export: user cancelled or error occurred');
+                      }
+                    });
+                  }
                   break;
                 default:
                   break;
@@ -118,6 +152,16 @@ struct Index {
         .constraintSize({ maxWidth: '100%', maxHeight: '100%' })
     }
     .height('100%')
+  }
+
+  private processPendingImport(): void {
+    const pendingFile = AppStorage.get<string>('pendingImportFile');
+    if (pendingFile && this.xComponentContext) {
+      console.info('Processing pending import file: ' + pendingFile);
+      this.xComponentContext.setChosenFile(pendingFile);
+      this.xComponentContext.markAutoImport();
+      AppStorage.set('pendingImportFile', '');
+    }
   }
   onBackPress(): boolean {
     return true;

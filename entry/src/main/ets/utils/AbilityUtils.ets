@@ -6,6 +6,11 @@ import { picker } from '@kit.CoreFileKit';
 import fs from '@ohos.file.fs';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 
+export interface FileSaveResult {
+  uri: string;
+  fd: number;
+}
+
 export function startBrowsableAbility(context: common.UIAbilityContext, url: string): void {
   let want: Want = {
     action: 'ohos.want.action.viewData',
@@ -117,5 +122,31 @@ export async function isDebugVersion(): Promise<boolean> {
   } catch (err) {
     console.error(`Failed to get bundle info: ${err.message}`);
     return false;
+  }
+}
+
+export async function callFilePickerSaveFile(filename: string): Promise<FileSaveResult | undefined> {
+  try {
+    let documentSaveOptions = new picker.DocumentSaveOptions();
+    documentSaveOptions.newFileNames = [filename];
+    let documentPicker = new picker.DocumentViewPicker();
+    const documentSaveResult = await documentPicker.save(documentSaveOptions);
+    if (documentSaveResult && documentSaveResult.length > 0) {
+      const uri = documentSaveResult[0];
+      let file: fs.File | null = null;
+      try {
+        file = await fs.open(uri, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+        const fd = file.fd;
+        return { uri, fd };
+      } catch (openErr) {
+        console.error(`callFilePickerSaveFile failed to open file: ${(openErr as BusinessError).message}`);
+        return { uri, fd: -1 };
+      }
+    }
+    return undefined;
+  } catch (err) {
+    const error = err as BusinessError;
+    console.error(`callFilePickerSaveFile error: ${error.code}, ${error.message}`);
+    return undefined;
   }
 }
