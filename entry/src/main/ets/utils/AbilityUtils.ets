@@ -1,10 +1,37 @@
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import bundleManager from '@ohos.bundle.bundleManager';
-import { JSON } from '@kit.ArkTS';
-import { picker } from '@kit.CoreFileKit';
+import { JSON, taskpool } from '@kit.ArkTS';
+import { picker, fileIo } from '@kit.CoreFileKit';
 import fs from '@ohos.file.fs';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
+
+@Concurrent
+function clearCacheDir(cacheDir: string): void {
+  try {
+    if (fileIo.accessSync(cacheDir)) {
+      const files = fileIo.listFileSync(cacheDir);
+      for (const file of files) {
+        const filePath = cacheDir + '/' + file;
+        const stat = fileIo.statSync(filePath);
+        if (stat.isDirectory()) {
+          fileIo.rmdirSync(filePath);
+        } else {
+          fileIo.unlinkSync(filePath);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to clear cache directory: ' + JSON.stringify(err));
+  }
+}
+
+export function executeClearCacheTask(cacheDir: string): void {
+  const task = new taskpool.Task(clearCacheDir, cacheDir);
+  taskpool.execute(task).catch((err: BusinessError) => {
+    console.error('Cache cleanup task failed: ' + JSON.stringify(err));
+  });
+}
 
 export interface FileSaveResult {
   uri: string;

@@ -2,10 +2,11 @@ import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.Ab
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window, display } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { copyUriToTempFile } from '../utils/AbilityUtils';
+import { copyUriToTempFile, executeClearCacheTask } from '../utils/AbilityUtils';
 
 const DOMAIN = 0x0000;
 const TAG = "Phira-ohos";
+
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     try {
@@ -36,6 +37,8 @@ export default class EntryAbility extends UIAbility {
       } catch (err) {
         hilog.error(DOMAIN, TAG, 'Failed to handle file import. Cause: %{public}s', JSON.stringify(err));
       }
+    } else {
+      executeClearCacheTask(this.context.cacheDir);
     }
   }
 
