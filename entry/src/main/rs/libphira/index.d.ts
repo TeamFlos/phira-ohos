@@ -2,7 +2,6 @@
 /* eslint-disable */
 
 export interface InputBoxRequest {
-  /** Raw pointer to the callback. Pass this value back unchanged in the response. */
   callback: number
   title: string
   prompt?: string
@@ -17,7 +16,6 @@ export interface InputBoxRequest {
 }
 
 export interface InputBoxResponse {
-  /** Raw pointer to the callback. Must be the same value from the request. */
   callback: number
   text?: string
   error?: string
@@ -28,12 +26,6 @@ export interface InputBoxResponse {
  *
  * This function should be called from ArkTS when the user completes or cancels
  * the input dialog.
- *
- * # Safety
- *
- * The `callback` field in the response must be the exact same value received
- * in the corresponding [`InputBoxRequest`]. Passing any other value will cause
- * undefined behavior.
  *
  * # Example
  *
@@ -60,8 +52,8 @@ export declare function onInputboxResponse(response: InputBoxResponse): void
 /**
  * Register the ArkTS callback handler for input box requests.
  *
- * This function must be called from ArkTS before using the InputBox API.
- * The callback will receive [`InputBoxRequest`] objects when `show()` is called.
+ * This function must be called from ArkTS before using the InputBox API. The
+ * callback will receive [`InputBoxRequest`] objects when `show()` is called.
  *
  * # Example
  *
@@ -79,9 +71,7 @@ export declare function registerArktsCallback(callback: (arg: string) => void): 
 
 export declare function setInterceptorState(state: boolean): boolean
 
-export declare function markImport(): void
-
-export declare function markImportRespack(): void
+export declare function markAutoImport(): void
 
 export declare function processExportFdOhos(fd: number): void
 
