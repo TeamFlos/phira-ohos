@@ -1,4 +1,5 @@
 import { InputDialog } from '../components/InputDialog';
+import { MockPermissionDialog, PermissionGroupConfig } from '../components/FakePermissionDialog';
 import {
   callFilePickerAndProcess,
   callFilePickerSaveFile,
@@ -7,6 +8,8 @@ import {
 } from '../utils/AbilityUtils';
 import { common } from '@kit.AbilityKit';
 import { InputBoxRequest, InputBoxResponse } from 'libphira.so';
+import { mediaquery } from '@kit.ArkUI';
+
 interface ShowInputWindowCommand {
   action: "show_input_window";
   isPassword: boolean;
@@ -53,15 +56,58 @@ struct Index {
   @StorageLink('pendingImportFile') @Watch('onPendingImportChange') pendingImportFile: string = '';
   @State currentRequest: InputBoxRequest | null = null;
   private inputDialogController: CustomDialogController | null = null;
+  @State isPhone: boolean = true;
+  @State mockPermissions: PermissionGroupConfig[] = [
+    {
+      groupName: 'GAME',
+      icon: $r('app.media.info_circle'),
+      title: $r('app.string.permission_title_multimodal_input'),
+      readAndWrite: $r('app.string.permission_read_write_touch'),
+      reason: $r('app.string.permission_reason_disable_touch'),
+      buttonList: [$r('app.string.button_not_allow'), $r('app.string.button_allow')]
+    },
+  ];
+  private listener = this.getUIContext().getMediaQuery().matchMediaSync('(max-width: 600vp)');
+  private permissionDialogController: CustomDialogController | null = null;
 
   aboutToAppear(): void {
+    PersistentStorage.persistProp('isFirstLaunch', true);
     console.log("system info:" + getSystemInfo());
+    this.listener.on('change', (mediaQueryResult: mediaquery.MediaQueryResult) => {
+      this.isPhone = mediaQueryResult.matches;
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.listener.off('change');
+    this.permissionDialogController = null;
   }
 
   onPendingImportChange(): void {
     if (this.xComponentContext && this.pendingImportFile) {
       this.processPendingImport();
     }
+  }
+
+  showPermissionDialog(): void {
+    this.permissionDialogController = new CustomDialogController({
+      builder: MockPermissionDialog({
+        isPhone: this.isPhone,
+        grantGroups: this.mockPermissions,
+        onResult: (actionIndex: number, _groupName: string) => {
+          if (actionIndex === 0) {
+            this.context.terminateSelf();
+          } else {
+            AppStorage.set('isFirstLaunch', false);
+            this.xComponentContext.setInterceptorState(true);
+          }
+        }
+      }),
+      alignment: this.isPhone ? DialogAlignment.Bottom : DialogAlignment.Center,
+      customStyle: true,
+      autoCancel: false,
+    });
+    this.permissionDialogController.open();
   }
 
   showInputDialog(request: InputBoxRequest): void {
@@ -145,6 +191,11 @@ struct Index {
               console.error("Failed to parse argument as JSON. Raw argument: ", arg, "Error: ", error);
             }
           });
+          const isFirstLaunch = AppStorage.get<boolean>('isFirstLaunch');
+          if (isFirstLaunch) {
+            this.xComponentContext.setInterceptorState(false);
+            this.showPermissionDialog();
+          }
           this.processPendingImport();
         })
         .focusable(true)

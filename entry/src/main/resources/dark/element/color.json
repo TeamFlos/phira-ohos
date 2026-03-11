@@ -35,6 +35,10 @@
     {
       "name": "button_background_primary",
       "value": "#007DFF"
+    },
+    {
+      "name": "color_forbidden",
+      "value": "#ffd94838"
     }
   ]
 }

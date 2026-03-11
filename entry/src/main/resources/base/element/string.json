@@ -39,6 +39,26 @@
     {
       "name": "permission_reason_intercept_input",
       "value": "用于捕获触摸和按键等输入事件，并传递至游戏渲染引擎以实现游戏交互操作"
+    },
+    {
+      "name": "permission_title_multimodal_input",
+      "value": "允许\"Phira\"使用多模输入服务？"
+    },
+    {
+      "name": "permission_read_write_touch",
+      "value": "用于捕获触摸事件，并传递至游戏引擎以实现交互操作"
+    },
+    {
+      "name": "permission_reason_disable_touch",
+      "value": "若禁用，应用将无法响应触控，导致无法正常游玩。"
+    },
+    {
+      "name": "button_not_allow",
+      "value": "不允许"
+    },
+    {
+      "name": "button_allow",
+      "value": "允许"
     }
   ]
 }
