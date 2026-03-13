@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "org.flos.phira.hmos",
+    "bundleName": "org.flos.phira.hmos.game",
     "vendor": "example",
     "versionCode": 1000020,
     "versionName": "0.6.7.1",
