@@ -12,7 +12,13 @@
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERCEPT_INPUT_EVENT",
-        "reason": "$string:permission_reason_intercept_input"
+        "reason": "$string:permission_reason_intercept_input",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
       },
       {
         "name": "ohos.permission.INTERNET"
