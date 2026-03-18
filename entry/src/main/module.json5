@@ -9,6 +9,16 @@
       "2in1",
       "phone"
     ],
+    "metadata": [
+      {
+        "name": "client_id",
+        "value": "6917599986453691750"
+      },
+      {
+        "name": "app_id",
+        "value": "6917599986453691750"
+      }
+    ],
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERCEPT_INPUT_EVENT",
