@@ -32,9 +32,13 @@ interface RequestExportCommand {
   action: "request_export";
   filename: string;
 }
+interface InterceptorStateCommand {
+  action: "interceptor_state";
+  state: boolean;
+}
 
 type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand
-  | RequestExportCommand;
+  | RequestExportCommand | InterceptorStateCommand;
 
 interface XComponentAttrs {
   id: string;
@@ -51,6 +55,7 @@ struct Index {
     type: XComponentType.SURFACE,
     libraryname: 'phira'
   }
+  @State interceptorState: boolean = false;
   @State showInput: boolean = false;
   @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
   @StorageLink('pendingImportFile') @Watch('onPendingImportChange') pendingImportFile: string = '';
@@ -99,7 +104,6 @@ struct Index {
             this.context.terminateSelf();
           } else {
             AppStorage.set('isFirstLaunch', false);
-            this.xComponentContext.setInterceptorState(true);
           }
         }
       }),
@@ -125,7 +129,6 @@ struct Index {
             callback: request.callback,
             text: text
           };
-          this.xComponentContext.setInterceptorState(true);
           this.xComponentContext!.onInputboxResponse(response);
           this.inputDialogController = null;
         },
@@ -134,7 +137,6 @@ struct Index {
             callback: request.callback,
             text: undefined
           };
-          this.xComponentContext.setInterceptorState(true);
           this.xComponentContext!.onInputboxResponse(response);
           this.inputDialogController = null;
         }
@@ -163,6 +165,9 @@ struct Index {
                 return;
               }
               switch (command.action) {
+                case "interceptor_state":
+                  this.interceptorState = command.state;
+                  break;
                 case "openurl":
                   const url = command.payload;
                   if (typeof url === 'string' && url) {
@@ -193,7 +198,6 @@ struct Index {
           });
           const isFirstLaunch = AppStorage.get<boolean>('isFirstLaunch');
           if (isFirstLaunch) {
-            this.xComponentContext.setInterceptorState(false);
             this.showPermissionDialog();
           }
           this.processPendingImport();
@@ -215,6 +219,6 @@ struct Index {
     }
   }
   onBackPress(): boolean {
-    return true;
+    return this.interceptorState;
   }
 }
