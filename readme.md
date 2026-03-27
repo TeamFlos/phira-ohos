@@ -1,5 +1,7 @@
 # Phira OHOS
 
+Detailed docs [here](https://teamflos.github.io/phira-docs/phira_build_guide/OpenHarmony.html)
+
 ## Configuration
 
 mv `build-profile-nosigncfg.json5` to `build-profile.json5`, and request sign file on it.
