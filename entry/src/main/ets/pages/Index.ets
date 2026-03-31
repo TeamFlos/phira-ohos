@@ -1,13 +1,13 @@
-import { InputDialog } from '../components/InputDialog';
+import { InputDialog } from "../components/InputDialog";
 import {
   callFilePickerAndProcess,
   callFilePickerSaveFile,
   getSystemInfo,
-  startBrowsableAbility
-} from '../utils/AbilityUtils';
-import { common } from '@kit.AbilityKit';
-import { InputBoxRequest, InputBoxResponse } from 'libphira.so';
-import { mediaquery } from '@kit.ArkUI';
+  startBrowsableAbility,
+} from "../utils/AbilityUtils";
+import { common } from "@kit.AbilityKit";
+import { InputBoxRequest, InputBoxResponse } from "libphira.so";
+import { mediaquery } from "@kit.ArkUI";
 
 interface ShowInputWindowCommand {
   action: "show_input_window";
@@ -36,8 +36,13 @@ interface InterceptorStateCommand {
   state: boolean;
 }
 
-type ArkTSCommand = ShowInputWindowCommand | OpenUrlCommand | ShowMessageCommand | ChooseFileCommand
-  | RequestExportCommand | InterceptorStateCommand;
+type ArkTSCommand =
+  | ShowInputWindowCommand
+  | OpenUrlCommand
+  | ShowMessageCommand
+  | ChooseFileCommand
+  | RequestExportCommand
+  | InterceptorStateCommand;
 
 interface XComponentAttrs {
   id: string;
@@ -50,29 +55,30 @@ interface XComponentAttrs {
 struct Index {
   xComponentContext: ESObject = undefined;
   xComponentAttrs: XComponentAttrs = {
-    id: 'xcomponentId',
+    id: "xcomponentId",
     type: XComponentType.SURFACE,
-    libraryname: 'phira'
-  }
+    libraryname: "phira",
+  };
   @State interceptorState: boolean = false;
   @State showInput: boolean = false;
-  @State context: common.UIAbilityContext = this.getUIContext().getHostContext()! as common.UIAbilityContext;
-  @StorageLink('pendingImportFile') @Watch('onPendingImportChange') pendingImportFile: string = '';
+  @State context: common.UIAbilityContext =
+    this.getUIContext().getHostContext()! as common.UIAbilityContext;
+  @StorageLink("pendingImportFile") @Watch("onPendingImportChange") pendingImportFile: string = "";
   @State currentRequest: InputBoxRequest | null = null;
   private inputDialogController: CustomDialogController | null = null;
   @State isPhone: boolean = true;
-  private listener = this.getUIContext().getMediaQuery().matchMediaSync('(max-width: 600vp)');
+  private listener = this.getUIContext().getMediaQuery().matchMediaSync("(max-width: 600vp)");
 
   aboutToAppear(): void {
-    PersistentStorage.persistProp('isFirstLaunch', true);
+    PersistentStorage.persistProp("isFirstLaunch", true);
     console.log("system info:" + getSystemInfo());
-    this.listener.on('change', (mediaQueryResult: mediaquery.MediaQueryResult) => {
+    this.listener.on("change", (mediaQueryResult: mediaquery.MediaQueryResult) => {
       this.isPhone = mediaQueryResult.matches;
     });
   }
 
   aboutToDisappear(): void {
-    this.listener.off('change');
+    this.listener.off("change");
   }
 
   onPendingImportChange(): void {
@@ -94,7 +100,7 @@ struct Index {
         onConfirm: (text: string) => {
           const response: InputBoxResponse = {
             callback: request.callback,
-            text: text
+            text: text,
           };
           this.xComponentContext!.onInputboxResponse(response);
           this.inputDialogController = null;
@@ -102,15 +108,15 @@ struct Index {
         onCancel: () => {
           const response: InputBoxResponse = {
             callback: request.callback,
-            text: undefined
+            text: undefined,
           };
           this.xComponentContext!.onInputboxResponse(response);
           this.inputDialogController = null;
-        }
+        },
       }),
       autoCancel: false,
       alignment: DialogAlignment.Center,
-      customStyle: true
+      customStyle: true,
     });
 
     this.inputDialogController.open();
@@ -128,7 +134,7 @@ struct Index {
           this.xComponentContext!.registerArktsCallback((arg: string) => {
             try {
               const command = JSON.parse(arg) as ArkTSCommand;
-              if (!command || typeof command.action !== 'string') {
+              if (!command || typeof command.action !== "string") {
                 return;
               }
               switch (command.action) {
@@ -137,7 +143,7 @@ struct Index {
                   break;
                 case "openurl":
                   const url = command.payload;
-                  if (typeof url === 'string' && url) {
+                  if (typeof url === "string" && url) {
                     startBrowsableAbility(this.context, url);
                   }
                   break;
@@ -146,12 +152,12 @@ struct Index {
                   break;
                 case "request_export":
                   const filename = command.filename;
-                  if (typeof filename === 'string' && filename) {
+                  if (typeof filename === "string" && filename) {
                     callFilePickerSaveFile(filename).then((result) => {
                       if (result) {
                         this.xComponentContext!.processExportFdOhos(result.fd);
                       } else {
-                        console.log('request_export: user cancelled or error occurred');
+                        console.log("request_export: user cancelled or error occurred");
                       }
                     });
                   }
@@ -160,25 +166,29 @@ struct Index {
                   break;
               }
             } catch (error) {
-              console.error("Failed to parse argument as JSON. Raw argument: ", arg, "Error: ", error);
+              console.error(
+                "Failed to parse argument as JSON. Raw argument: ",
+                arg,
+                "Error: ",
+                error,
+              );
             }
           });
           this.processPendingImport();
         })
         .focusable(true)
         .defaultFocus(true)
-        .constraintSize({ maxWidth: '100%', maxHeight: '100%' })
-    }
-    .height('100%')
+        .constraintSize({ maxWidth: "100%", maxHeight: "100%" })
+    }.height("100%");
   }
 
   private processPendingImport(): void {
-    const pendingFile = AppStorage.get<string>('pendingImportFile');
+    const pendingFile = AppStorage.get<string>("pendingImportFile");
     if (pendingFile && this.xComponentContext) {
-      console.info('Processing pending import file: ' + pendingFile);
+      console.info("Processing pending import file: " + pendingFile);
       this.xComponentContext.setChosenFile(pendingFile);
       this.xComponentContext.markAutoImport();
-      AppStorage.set('pendingImportFile', '');
+      AppStorage.set("pendingImportFile", "");
     }
   }
   onBackPress(): boolean {

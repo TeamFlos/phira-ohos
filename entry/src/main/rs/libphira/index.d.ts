@@ -2,80 +2,79 @@
 /* eslint-disable */
 
 export interface InputBoxRequest {
-  callback: number
-  title: string
-  prompt?: string
-  defaultValue: string
-  mode: string
-  okLabel: string
-  cancelLabel: string
-  width?: number
-  height?: number
-  autoWrap: boolean
-  scrollToEnd: boolean
+  callback: number;
+  title: string;
+  prompt?: string;
+  defaultValue: string;
+  mode: string;
+  okLabel: string;
+  cancelLabel: string;
+  width?: number;
+  height?: number;
+  autoWrap: boolean;
+  scrollToEnd: boolean;
 }
 
 export interface InputBoxResponse {
-  callback: number
-  text?: string
-  error?: string
+  callback: number;
+  text?: string;
+  error?: string;
 }
 
 /**
-  * Handle response from ArkTS layer.
-  *
-  * This function should be called from ArkTS when the user completes or cancels
-  * the input dialog.
-  *
-  * # Example
-  *
-  * ```typescript
-  * import inputbox from 'libinputbox.so';
-  *
-  * // When user clicks OK:
-  * inputbox.onInputboxResponse({
-  *   callback: request.callback,
-  *   text: userInputText,
-  *   error: null
-  * });
-  *
-  * // When user clicks Cancel:
-  * inputbox.onInputboxResponse({
-  *   callback: request.callback,
-  *   text: null,
-  *   error: null
-  * });
-  * ```
-  */
-export declare function onInputboxResponse(response: InputBoxResponse): void
+ * Handle response from ArkTS layer.
+ *
+ * This function should be called from ArkTS when the user completes or cancels
+ * the input dialog.
+ *
+ * # Example
+ *
+ * ```typescript
+ * import inputbox from 'libinputbox.so';
+ *
+ * // When user clicks OK:
+ * inputbox.onInputboxResponse({
+ *   callback: request.callback,
+ *   text: userInputText,
+ *   error: null
+ * });
+ *
+ * // When user clicks Cancel:
+ * inputbox.onInputboxResponse({
+ *   callback: request.callback,
+ *   text: null,
+ *   error: null
+ * });
+ * ```
+ */
+export declare function onInputboxResponse(response: InputBoxResponse): void;
 
 /**
-  * Register the ArkTS callback handler for input box requests.
-  *
-  * This function must be called from ArkTS before using the InputBox API. The
-  * callback will receive [`InputBoxRequest`] objects when `show()` is called.
-  *
-  * # Example
-  *
-  * ```typescript
-  * import inputbox from 'libinputbox.so';
-  *
-  * inputbox.registerInputboxCallback((request) => {
-  *   // Display dialog and handle user input
-  * });
-  * ```
-  */
-export declare function registerInputboxCallback(callback: (arg: InputBoxRequest) => void): void
+ * Register the ArkTS callback handler for input box requests.
+ *
+ * This function must be called from ArkTS before using the InputBox API. The
+ * callback will receive [`InputBoxRequest`] objects when `show()` is called.
+ *
+ * # Example
+ *
+ * ```typescript
+ * import inputbox from 'libinputbox.so';
+ *
+ * inputbox.registerInputboxCallback((request) => {
+ *   // Display dialog and handle user input
+ * });
+ * ```
+ */
+export declare function registerInputboxCallback(callback: (arg: InputBoxRequest) => void): void;
 
-export declare function registerArktsCallback(callback: (arg: string) => void): void
+export declare function registerArktsCallback(callback: (arg: string) => void): void;
 
-export declare function setInterceptorState(state: boolean): boolean
+export declare function setInterceptorState(state: boolean): boolean;
 
-export declare function markAutoImport(): void
+export declare function markAutoImport(): void;
 
-export declare function processExportFdOhos(fd: number): void
+export declare function processExportFdOhos(fd: number): void;
 
-export declare function setChosenFile(file: string): void
+export declare function setChosenFile(file: string): void;
 
-export declare function setInputText(text: string): void
-
+export declare function setInputText(text: string): void;

@@ -1,10 +1,10 @@
-import { common, Want } from '@kit.AbilityKit';
-import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
-import bundleManager from '@ohos.bundle.bundleManager';
-import { JSON, taskpool } from '@kit.ArkTS';
-import { picker, fileIo } from '@kit.CoreFileKit';
-import fs from '@ohos.file.fs';
-import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { common, Want } from "@kit.AbilityKit";
+import { BusinessError, deviceInfo } from "@kit.BasicServicesKit";
+import bundleManager from "@ohos.bundle.bundleManager";
+import { JSON, taskpool } from "@kit.ArkTS";
+import { picker, fileIo } from "@kit.CoreFileKit";
+import fs from "@ohos.file.fs";
+import { photoAccessHelper } from "@kit.MediaLibraryKit";
 
 @Concurrent
 function clearCacheDir(cacheDir: string): void {
@@ -12,7 +12,7 @@ function clearCacheDir(cacheDir: string): void {
     if (fileIo.accessSync(cacheDir)) {
       const files = fileIo.listFileSync(cacheDir);
       for (const file of files) {
-        const filePath = cacheDir + '/' + file;
+        const filePath = cacheDir + "/" + file;
         const stat = fileIo.statSync(filePath);
         if (stat.isDirectory()) {
           fileIo.rmdirSync(filePath);
@@ -22,14 +22,14 @@ function clearCacheDir(cacheDir: string): void {
       }
     }
   } catch (err) {
-    console.error('Failed to clear cache directory: ' + JSON.stringify(err));
+    console.error("Failed to clear cache directory: " + JSON.stringify(err));
   }
 }
 
 export function executeClearCacheTask(cacheDir: string): void {
   const task = new taskpool.Task(clearCacheDir, cacheDir);
   taskpool.execute(task).catch((err: BusinessError) => {
-    console.error('Cache cleanup task failed: ' + JSON.stringify(err));
+    console.error("Cache cleanup task failed: " + JSON.stringify(err));
   });
 }
 
@@ -40,12 +40,12 @@ export interface FileSaveResult {
 
 export function startBrowsableAbility(context: common.UIAbilityContext, url: string): void {
   let want: Want = {
-    action: 'ohos.want.action.viewData',
-    entities: ['entity.system.browsable'],
+    action: "ohos.want.action.viewData",
+    entities: ["entity.system.browsable"],
     uri: url,
     parameters: {
-      'ohos.ability.params.showDefaultPicker': true
-    }
+      "ohos.ability.params.showDefaultPicker": true,
+    },
   };
   context.startAbility(want).catch((err: BusinessError) => {
     console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
@@ -54,7 +54,9 @@ export function startBrowsableAbility(context: common.UIAbilityContext, url: str
 
 export function getSystemInfo(): string {
   try {
-    let bundleInfo = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
+    let bundleInfo = bundleManager.getBundleInfoForSelfSync(
+      bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION,
+    );
     let appBundleName = bundleInfo.name;
     let deviceModel = deviceInfo.marketName;
     let osVersion = deviceInfo.displayVersion;
@@ -85,7 +87,10 @@ export function getSystemInfo(): string {
   }
 }
 
-export async function copyUriToTempFile(context: common.UIAbilityContext, sourceUri: string): Promise<string | undefined> {
+export async function copyUriToTempFile(
+  context: common.UIAbilityContext,
+  sourceUri: string,
+): Promise<string | undefined> {
   const tempFilePath = `${context.cacheDir}/temp_${Date.now()}`;
   let sourceFile: fs.File | null = null;
   try {
@@ -110,7 +115,7 @@ export async function copyUriToTempFile(context: common.UIAbilityContext, source
 export async function callFilePickerAndProcess(
   xComponentContext: ESObject,
   context: common.UIAbilityContext,
-  isPhoto: boolean = false
+  isPhoto: boolean = false,
 ): Promise<void> {
   try {
     if (isPhoto) {
@@ -119,7 +124,11 @@ export async function callFilePickerAndProcess(
       photoSelectOptions.maxSelectNumber = 1;
       let photoPicker = new photoAccessHelper.PhotoViewPicker();
       const photoSelectResult = await photoPicker.select(photoSelectOptions);
-      if (photoSelectResult && photoSelectResult.photoUris && photoSelectResult.photoUris.length > 0) {
+      if (
+        photoSelectResult &&
+        photoSelectResult.photoUris &&
+        photoSelectResult.photoUris.length > 0
+      ) {
         const uri = photoSelectResult.photoUris[0];
         const localPath = await copyUriToTempFile(context, uri);
         xComponentContext!.setChosenFile(localPath);
@@ -127,7 +136,7 @@ export async function callFilePickerAndProcess(
     } else {
       let documentPicker = new picker.DocumentViewPicker();
       let documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.fileSuffixFilters = ['.pez','.zip'];
+      documentSelectOptions.fileSuffixFilters = [".pez", ".zip"];
       documentSelectOptions.maxSelectNumber = 1;
       const documentSelectResult = await documentPicker.select(documentSelectOptions);
       if (documentSelectResult && documentSelectResult.length > 0) {
@@ -144,15 +153,19 @@ export async function callFilePickerAndProcess(
 
 export async function isDebugVersion(): Promise<boolean> {
   try {
-    const bundleInfo = await bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION);
-    return bundleInfo.appInfo.appProvisionType === 'debug';
+    const bundleInfo = await bundleManager.getBundleInfoForSelf(
+      bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION,
+    );
+    return bundleInfo.appInfo.appProvisionType === "debug";
   } catch (err) {
     console.error(`Failed to get bundle info: ${err.message}`);
     return false;
   }
 }
 
-export async function callFilePickerSaveFile(filename: string): Promise<FileSaveResult | undefined> {
+export async function callFilePickerSaveFile(
+  filename: string,
+): Promise<FileSaveResult | undefined> {
   try {
     let documentSaveOptions = new picker.DocumentSaveOptions();
     documentSaveOptions.newFileNames = [filename];
@@ -166,7 +179,9 @@ export async function callFilePickerSaveFile(filename: string): Promise<FileSave
         const fd = file.fd;
         return { uri, fd };
       } catch (openErr) {
-        console.error(`callFilePickerSaveFile failed to open file: ${(openErr as BusinessError).message}`);
+        console.error(
+          `callFilePickerSaveFile failed to open file: ${(openErr as BusinessError).message}`,
+        );
         return { uri, fd: -1 };
       }
     }
