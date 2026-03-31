@@ -35,34 +35,6 @@
     {
       "name": "button_confirm",
       "value": "Confirm"
-    },
-    {
-      "name": "permission_reason_intercept_input",
-      "value": "Used to capture touch and key input events and forward them to the game rendering engine for gameplay interaction"
-    },
-    {
-      "name": "permission_title_multimodal_input",
-      "value": "Allow \"Phira\" to use multimodal input services?"
-    },
-    {
-      "name": "permission_read_write_touch",
-      "value": "Used to capture touch events and forward them to the game engine for interaction"
-    },
-    {
-      "name": "permission_reason_disable_touch",
-      "value": "If disabled, the app will not respond to touch controls, resulting in inability to play normally."
-    },
-    {
-      "name": "button_not_allow",
-      "value": "Not Allow"
-    },
-    {
-      "name": "button_allow",
-      "value": "Allow"
-    },
-    {
-      "name": "unilogin_agc",
-      "value": "Login to Phira"
     }
   ]
 }
