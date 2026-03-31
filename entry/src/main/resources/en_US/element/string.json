@@ -25,6 +25,10 @@
       "value": "Enter your password..."
     },
     {
+      "name": "permission_reason_intercept_input",
+      "value": "permission reason intercept input"
+    },
+    {
       "name": "input_dialog_placeholder_content",
       "value": "Enter content..."
     },

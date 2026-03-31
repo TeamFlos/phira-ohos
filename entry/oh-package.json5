@@ -1,13 +1,11 @@
 {
-  "name": "entry",
-  "version": "1.0.0",
-  "description": "Phira main game",
-  "main": "",
-  "author": "ljlvink",
-  "license": "GPL-3.0",
-  "dependencies": {
-    "libphira.so": "file:src/main/rs/libphira",
-  },
-
+  name: "entry",
+  version: "1.0.0",
+  description: "Phira main game",
+  main: "",
+  author: "ljlvink",
+  license: "GPL-3.0",
+  dependencies: {
+    "libphira.so": "file:src/main/rs/libphira"
+  }
 }
-

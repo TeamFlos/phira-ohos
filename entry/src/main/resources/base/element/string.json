@@ -25,6 +25,10 @@
       "value": "输入密码..."
     },
     {
+      "name": "permission_reason_intercept_input",
+      "value": "permission reason intercept input"
+    },
+    {
       "name": "input_dialog_placeholder_content",
       "value": "输入内容..."
     },
