@@ -47,7 +47,7 @@
         startWindowIcon: "$media:startIcon",
         startWindowBackground: "$color:start_window_background",
         exported: true,
-        orientation: "landscape",
+        orientation: "auto_rotation_landscape",
         supportWindowMode: [
           "fullscreen",
           "split"
