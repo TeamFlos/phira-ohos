@@ -17,6 +17,10 @@
       {
         name: "app_id",
         value: "6917599986453691750"
+      },
+      {
+        name: "GraphicsAccelerateKit_LTPO",
+        value: "true"
       }
     ],
     requestPermissions: [
