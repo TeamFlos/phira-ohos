@@ -1,10 +1,10 @@
 {
   app: {
-    bundleName: "org.flos.phira.hmos.game",
-    vendor: "example",
-    versionCode: 1000041,
-    versionName: "0.7.1",
-    icon: "$media:layered_image",
-    label: "$string:app_name"
-  }
+    bundleName: 'org.flos.phira.hmos.game',
+    vendor: 'example',
+    versionCode: 1000050,
+    versionName: '0.7.2',
+    icon: '$media:layered_image',
+    label: '$string:app_name',
+  },
 }

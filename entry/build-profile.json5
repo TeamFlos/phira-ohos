@@ -1,33 +1,31 @@
 {
-  apiType: "stageMode",
+  apiType: 'stageMode',
   buildOption: {
     resOptions: {
       copyCodeResource: {
-        enable: false
-      }
-    }
+        enable: false,
+      },
+    },
   },
   buildOptionSet: [
     {
-      name: "release",
+      name: 'release',
       arkOptions: {
         obfuscation: {
           ruleOptions: {
             enable: true,
-            files: [
-              "./obfuscation-rules.txt"
-            ]
-          }
-        }
-      }
-    }
+            files: ['./obfuscation-rules.txt'],
+          },
+        },
+      },
+    },
   ],
   targets: [
     {
-      name: "default"
+      name: 'default',
     },
     {
-      name: "ohosTest"
-    }
-  ]
+      name: 'ohosTest',
+    },
+  ],
 }

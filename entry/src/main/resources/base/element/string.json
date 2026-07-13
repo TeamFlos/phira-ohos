@@ -39,6 +39,30 @@
     {
       "name": "button_confirm",
       "value": "确定"
+    },
+    {
+      "name": "crash_dialog_title",
+      "value": "游戏崩溃提示"
+    },
+    {
+      "name": "crash_dialog_message",
+      "value": "游戏在上次游玩时发生崩溃。建议导出崩溃日志并反馈给开发者，以便定位问题。感谢您的支持！"
+    },
+    {
+      "name": "crash_dialog_button_export",
+      "value": "导出日志"
+    },
+    {
+      "name": "crash_dialog_button_close",
+      "value": "关闭"
+    },
+    {
+      "name": "crash_toast_export_success",
+      "value": "崩溃日志已导出"
+    },
+    {
+      "name": "crash_toast_export_failed",
+      "value": "导出崩溃日志失败"
     }
   ]
 }
