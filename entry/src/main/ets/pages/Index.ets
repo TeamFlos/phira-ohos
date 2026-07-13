@@ -2,12 +2,14 @@ import { InputDialog } from "../components/InputDialog";
 import {
   callFilePickerAndProcess,
   callFilePickerSaveFile,
+  exportCrashLog,
   getSystemInfo,
   startBrowsableAbility,
 } from "../utils/AbilityUtils";
 import { common } from "@kit.AbilityKit";
 import { InputBoxRequest, InputBoxResponse } from "libphira.so";
-import { mediaquery } from "@kit.ArkUI";
+import { mediaquery, promptAction } from "@kit.ArkUI";
+import { BusinessError } from "@kit.BasicServicesKit";
 
 interface ShowInputWindowCommand {
   action: "show_input_window";
@@ -64,6 +66,7 @@ struct Index {
   @State context: common.UIAbilityContext =
     this.getUIContext().getHostContext()! as common.UIAbilityContext;
   @StorageLink("pendingImportFile") @Watch("onPendingImportChange") pendingImportFile: string = "";
+  @StorageLink("pendingCrashLog") @Watch("onCrashLogChange") pendingCrashLog: string = "";
   @State currentRequest: InputBoxRequest | null = null;
   private inputDialogController: CustomDialogController | null = null;
   @State isPhone: boolean = true;
@@ -75,6 +78,52 @@ struct Index {
     this.listener.on("change", (mediaQueryResult: mediaquery.MediaQueryResult) => {
       this.isPhone = mediaQueryResult.matches;
     });
+    if (this.pendingCrashLog && this.pendingCrashLog.length > 0) {
+      this.showCrashDialog();
+    }
+  }
+
+  onCrashLogChange(): void {
+    if (this.pendingCrashLog && this.pendingCrashLog.length > 0) {
+      this.showCrashDialog();
+    }
+  }
+
+  private showCrashDialog(): void {
+    const prompt = this.getUIContext().getPromptAction();
+    const buttons: promptAction.Button[] = [
+      { text: $r("app.string.crash_dialog_button_export"), color: "#0A59F7", primary: true },
+      { text: $r("app.string.crash_dialog_button_close"), color: "#666666" },
+    ];
+    prompt
+      .showDialog({
+        title: $r("app.string.crash_dialog_title"),
+        message: $r("app.string.crash_dialog_message"),
+        buttons: buttons,
+      })
+      .then((result) => {
+        const currentLog = this.pendingCrashLog;
+        AppStorage.set("pendingCrashLog", "");
+        if (result.index !== 0 || !currentLog) {
+          return;
+        }
+        exportCrashLog(currentLog).then((ok) => {
+          if (!ok) {
+            prompt.showToast({
+              message: $r("app.string.crash_toast_export_failed"),
+              duration: 2000,
+            });
+          } else {
+            prompt.showToast({
+              message: $r("app.string.crash_toast_export_success"),
+              duration: 1500,
+            });
+          }
+        });
+      })
+      .catch((error: BusinessError) => {
+        console.error("Failed to show crash dialog: " + JSON.stringify(error));
+      });
   }
 
   aboutToDisappear(): void {

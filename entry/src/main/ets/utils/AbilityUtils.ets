@@ -6,6 +6,8 @@ import { picker, fileIo } from "@kit.CoreFileKit";
 import fs from "@ohos.file.fs";
 import { photoAccessHelper } from "@kit.MediaLibraryKit";
 
+const OPENGTX_DISABLE_FLAG = "/data/storage/el2/base/disable_opengtx";
+
 @Concurrent
 function clearCacheDir(cacheDir: string): void {
   try {
@@ -51,6 +53,37 @@ export function startBrowsableAbility(context: common.UIAbilityContext, url: str
     console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
   });
 }
+//todo: judge if OpenHarmony or HarmonyOS, if OpenHarmony, then disable OpenGTX
+//these function are used to debug enable/disable OpenGTX
+
+function isOpenGtxDisabled(): boolean {
+  try {
+    return fs.accessSync(OPENGTX_DISABLE_FLAG);
+  } catch (error) {
+    console.error("Failed to check OpenGTX state: " + JSON.stringify(error));
+    return false;
+  }
+}
+
+export function setOpenGtxEnabled(enabled: boolean): boolean {
+  try {
+    if (enabled) {
+      if (isOpenGtxDisabled()) {
+        fs.unlinkSync(OPENGTX_DISABLE_FLAG);
+      }
+    } else {
+      const file = fs.openSync(
+        OPENGTX_DISABLE_FLAG,
+        fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC,
+      );
+      fs.closeSync(file);
+    }
+    return true;
+  } catch (error) {
+    console.error("Failed to update OpenGTX state: " + JSON.stringify(error));
+    return false;
+  }
+}
 
 export function getSystemInfo(): string {
   try {
@@ -78,7 +111,8 @@ export function getSystemInfo(): string {
       default:
         performanceClassStr = "unknown";
     }
-    const systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName}`;
+    const openGtxState = !isOpenGtxDisabled() ? "OpenGTX:on" : "OpenGTX:off";
+    const systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName} ${openGtxState} 测试版本，不代表最终游戏品质`;
     console.error("system info:" + systemInfo);
     return systemInfo;
   } catch (error) {
@@ -159,6 +193,34 @@ export async function isDebugVersion(): Promise<boolean> {
     return bundleInfo.appInfo.appProvisionType === "debug";
   } catch (err) {
     console.error(`Failed to get bundle info: ${err.message}`);
+    return false;
+  }
+}
+
+export async function exportCrashLog(crashLogPath: string): Promise<boolean> {
+  try {
+    const saveResult = await callFilePickerSaveFile(`crash_log_${Date.now()}.log`);
+    if (!saveResult) {
+      return false;
+    }
+    const src = await fs.open(crashLogPath, fs.OpenMode.READ_ONLY);
+    try {
+      await fs.copyFile(src.fd, saveResult.fd);
+      return true;
+    } finally {
+      try {
+        await fs.close(src);
+      } catch (err) {
+        console.error(`exportCrashLog close src failed: ${(err as BusinessError).message}`);
+      }
+      try {
+        await fs.close(saveResult.fd);
+      } catch (err) {
+        console.error(`exportCrashLog close dst failed: ${(err as BusinessError).message}`);
+      }
+    }
+  } catch (err) {
+    console.error(`exportCrashLog error: ${(err as BusinessError).message}`);
     return false;
   }
 }

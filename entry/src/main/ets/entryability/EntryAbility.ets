@@ -1,5 +1,5 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from "@kit.AbilityKit";
-import { hilog } from "@kit.PerformanceAnalysisKit";
+import { hilog, hiAppEvent } from "@kit.PerformanceAnalysisKit";
 import { window, display } from "@kit.ArkUI";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { copyUriToTempFile, executeClearCacheTask } from "../utils/AbilityUtils";
@@ -17,7 +17,37 @@ export default class EntryAbility extends UIAbility {
       hilog.error(DOMAIN, TAG, "Failed to set colorMode. Cause: %{public}s", JSON.stringify(err));
     }
     hilog.info(DOMAIN, TAG, "%{public}s", "Ability onCreate");
+    this.registerCrashWatcher();
     this.handleWant(want);
+  }
+
+  private registerCrashWatcher(): void {
+    const watcher: hiAppEvent.Watcher = {
+      name: "gameCrashWatcher",
+      appEventFilters: [
+        {
+          domain: hiAppEvent.domain.OS,
+          names: [hiAppEvent.event.APP_CRASH],
+        },
+      ],
+      onReceive: (domain: string, appEventGroups: Array<hiAppEvent.AppEventGroup>) => {
+        for (const group of appEventGroups) {
+          for (const info of group.appEventInfos) {
+            const externalLog = info.params["external_log"] as string[];
+            if (externalLog && externalLog.length > 0) {
+              const logPath = externalLog[0];
+              AppStorage.setOrCreate("pendingCrashLog", logPath);
+              hilog.info(DOMAIN, TAG, "Detected previous crash log: %{public}s", logPath);
+            }
+          }
+        }
+      },
+    };
+    try {
+      hiAppEvent.addWatcher(watcher);
+    } catch (err) {
+      hilog.error(DOMAIN, TAG, "Failed to add crash watcher: %{public}s", JSON.stringify(err));
+    }
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {

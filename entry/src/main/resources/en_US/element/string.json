@@ -39,6 +39,30 @@
     {
       "name": "button_confirm",
       "value": "Confirm"
+    },
+    {
+      "name": "crash_dialog_title",
+      "value": "Game Crash Notice"
+    },
+    {
+      "name": "crash_dialog_message",
+      "value": "The game crashed during your last play session. Please consider exporting the crash log and reporting it to the developers to help diagnose the issue. Thank you for your support!"
+    },
+    {
+      "name": "crash_dialog_button_export",
+      "value": "Export Log"
+    },
+    {
+      "name": "crash_dialog_button_close",
+      "value": "Close"
+    },
+    {
+      "name": "crash_toast_export_success",
+      "value": "Crash log exported"
+    },
+    {
+      "name": "crash_toast_export_failed",
+      "value": "Failed to export crash log"
     }
   ]
 }
