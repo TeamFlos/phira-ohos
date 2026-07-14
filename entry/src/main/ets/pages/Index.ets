@@ -6,6 +6,7 @@ import {
   getSystemInfo,
   startBrowsableAbility,
 } from "../utils/AbilityUtils";
+import { XComponentHolder } from "../utils/XComponentHolder";
 import { common } from "@kit.AbilityKit";
 import { InputBoxRequest, InputBoxResponse } from "libphira.so";
 import { mediaquery, promptAction } from "@kit.ArkUI";
@@ -128,6 +129,7 @@ struct Index {
 
   aboutToDisappear(): void {
     this.listener.off("change");
+    XComponentHolder.clear();
   }
 
   onPendingImportChange(): void {
@@ -176,6 +178,7 @@ struct Index {
       XComponent(this.xComponentAttrs)
         .onLoad((xComponentContext) => {
           this.xComponentContext = xComponentContext;
+          XComponentHolder.set(xComponentContext);
           this.xComponentContext!.registerInputboxCallback((request: InputBoxRequest) => {
             this.xComponentContext.setInterceptorState(false);
             this.showInputDialog(request);

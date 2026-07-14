@@ -73,6 +73,10 @@ export declare function setInterceptorState(state: boolean): boolean;
 
 export declare function markAutoImport(): void;
 
+export declare function onBackground(): void
+
+export declare function onForeground(): void
+
 export declare function processExportFdOhos(fd: number): void;
 
 export declare function setChosenFile(file: string): void;

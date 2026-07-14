@@ -3,6 +3,7 @@ import { hilog, hiAppEvent } from "@kit.PerformanceAnalysisKit";
 import { window, display } from "@kit.ArkUI";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { copyUriToTempFile, executeClearCacheTask } from "../utils/AbilityUtils";
+import { XComponentHolder } from "../utils/XComponentHolder";
 
 const DOMAIN = 0x0000;
 const TAG = "Phira-ohos";
@@ -141,12 +142,16 @@ export default class EntryAbility extends UIAbility {
   }
 
   onForeground(): void {
-    // Ability has brought to foreground
     hilog.info(DOMAIN, TAG, "%{public}s", "Ability onForeground");
+    XComponentHolder.ifPresent((ctx: ESObject): void => {
+      ctx.onForeground();
+    });
   }
 
   onBackground(): void {
-    // Ability has back to background
     hilog.info(DOMAIN, TAG, "%{public}s", "Ability onBackground");
+    XComponentHolder.ifPresent((ctx: ESObject): void => {
+      ctx.onBackground();
+    });
   }
 }
