@@ -1,0 +1,2 @@
+# Release automation scripts are tracked, but excluded from GitHub language statistics.
+*.ps1 linguist-detectable=false
