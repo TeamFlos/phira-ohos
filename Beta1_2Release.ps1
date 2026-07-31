@@ -91,7 +91,7 @@ try {
     Write-Host "5/5 Update hap inside app (store-only) ..."
     Update-Archive -Archive $hapFile  -WorkDir $workHap  -Files "pack.info", "module.json" -Deflate
     Copy-Item -LiteralPath $hapFile -Destination (Join-Path $stageHap "entry-default.hap") -Force
-    Update-Archive -Archive $outApp  -WorkDir $stageHap  -Files "entry-default.hap"
+    Update-Archive -Archive $outApp  -WorkDir $stageHap  -Files "entry-default.hap" -Deflate
 
     $item = Get-Item -LiteralPath $outApp
     $sizeMB = [math]::Round($item.Length / 1MB, 2)
