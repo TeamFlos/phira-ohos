@@ -170,7 +170,7 @@ export async function callFilePickerAndProcess(
     } else {
       let documentPicker = new picker.DocumentViewPicker();
       let documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.fileSuffixFilters = [".pez", ".zip"];
+      //documentSelectOptions.fileSuffixFilters = [".pez", ".zip"];
       documentSelectOptions.maxSelectNumber = 1;
       const documentSelectResult = await documentPicker.select(documentSelectOptions);
       if (documentSelectResult && documentSelectResult.length > 0) {
