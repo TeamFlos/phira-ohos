@@ -5,7 +5,7 @@ import * as path from "path";
 import { execSync } from "child_process";
 
 function loadProperties(filePath: string): Record<string, string> {
-  if (!fs.existsSync(filePath)) throw new Error(`Config file not found: ${filePath}`);
+  if (!fs.existsSync(filePath)) return {};
   const result: Record<string, string> = {};
   for (const line of fs.readFileSync(filePath, "utf-8").split(/\r?\n/)) {
     const trimmed = line.trim();
@@ -22,19 +22,17 @@ function requireConfig(config: Record<string, string>, key: string): string {
 }
 
 const localConfig = loadProperties(path.resolve(__dirname, "..", "local.properties"));
-const COPY_ENABLED = requireConfig(localConfig, "copyLibphira.enabled").toLowerCase() === "true";
-const LIBPHIRA_SRC = requireConfig(localConfig, "libphira.src");
-const WSL_DISTRO = requireConfig(localConfig, "wsl.distro");
+const COPY_ENABLED = localConfig["copyLibphira.enabled"]?.toLowerCase() === "true";
 
-function ensureWslFile(src: string, timeout = 60000, interval = 2000): void {
+function ensureWslFile(src: string, distro: string, timeout = 60000, interval = 2000): void {
   if (fs.existsSync(src)) return;
-  const wslRoot = `\\\\wsl.localhost\\${WSL_DISTRO}`;
+  const wslRoot = `\\\\wsl.localhost\\${distro}`;
   console.log(`[copyLibphira] not available, starting WSL (${wslRoot})...`);
   try {
     fs.readdirSync(wslRoot);
   } catch {
     try {
-      execSync(`wsl -d ${WSL_DISTRO} echo "wsl ready"`, { timeout: 15000 });
+      execSync(`wsl -d ${distro} echo "wsl ready"`, { timeout: 15000 });
     } catch (e) {
       console.warn(`[copyLibphira] wsl command failed: ${e}`);
     }
@@ -62,12 +60,14 @@ hvigor.nodesEvaluated(() => {
           console.log("[copyLibphira] disabled, skipping.");
           return;
         }
+        const libphiraSrc = requireConfig(localConfig, "libphira.src");
+        const wslDistro = requireConfig(localConfig, "wsl.distro");
         const dest = path.resolve(__dirname, "libs", "arm64-v8a", "libphira.so");
-        console.log(`[copyLibphira] src: ${LIBPHIRA_SRC}`);
+        console.log(`[copyLibphira] src: ${libphiraSrc}`);
         console.log(`[copyLibphira] dest: ${dest}`);
-        ensureWslFile(LIBPHIRA_SRC);
+        ensureWslFile(libphiraSrc, wslDistro);
         fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.copyFileSync(LIBPHIRA_SRC, dest);
+        fs.copyFileSync(libphiraSrc, dest);
       },
       postDependencies: [`${target.getTargetName()}@PackageHap`],
     });

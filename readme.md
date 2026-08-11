@@ -10,7 +10,7 @@ mv `build-profile-nosigncfg.json5` to `build-profile.json5`, and request sign fi
 
 If you are on Windows, use DevEco Studio to open this project, and compile the phira project via WSL, you can use this configuration to automatically copy the built library.
 
-Create `local.properties` in the project root with the following required properties:
+To enable it, create `local.properties` in the project root with the following properties:
 
 ```properties
 copyLibphira.enabled=true
