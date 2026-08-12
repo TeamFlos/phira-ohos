@@ -93,18 +93,33 @@ export default class EntryAbility extends UIAbility {
       try {
         windowClass.setWindowDecorVisible(false);
       } catch (e) {
-        hilog.error(DOMAIN, TAG, "Failed to setWindowDecorVisible. Cause: %{public}s", JSON.stringify(e));
+        hilog.error(
+          DOMAIN,
+          TAG,
+          "Failed to setWindowDecorVisible. Cause: %{public}s",
+          JSON.stringify(e),
+        );
       }
       try {
         await windowClass.setWindowKeepScreenOn(true);
       } catch (e) {
-        hilog.error(DOMAIN, TAG, "Failed to set the screen to be always on. Cause: %{public}s", JSON.stringify(e));
+        hilog.error(
+          DOMAIN,
+          TAG,
+          "Failed to set the screen to be always on. Cause: %{public}s",
+          JSON.stringify(e),
+        );
       }
       try {
         await windowClass.setWindowLayoutFullScreen(true);
         await windowClass.setWindowSystemBarEnable([]);
       } catch (e) {
-        hilog.error(DOMAIN, TAG, "Failed to set the window layout to full-screen mode. Cause: %{public}s", JSON.stringify(e));
+        hilog.error(
+          DOMAIN,
+          TAG,
+          "Failed to set the window layout to full-screen mode. Cause: %{public}s",
+          JSON.stringify(e),
+        );
       }
     });
     windowStage.loadContent("pages/Index", (err) => {
