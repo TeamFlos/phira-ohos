@@ -34,12 +34,7 @@ export struct InputDialog {
           .placeholderColor($r("app.color.font_color_placeholder"))
           .fontColor($r("app.color.font_color_primary"))
           .height(120)
-          .padding({
-            left: 12,
-            right: 12,
-            top: 8,
-            bottom: 8,
-          })
+          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
           .borderRadius(8)
           .margin({ bottom: 20, left: 16, right: 16 })
           .onChange((value: string) => {

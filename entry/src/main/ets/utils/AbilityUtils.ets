@@ -1,26 +1,26 @@
 import { common, Want } from "@kit.AbilityKit";
 import { BusinessError, deviceInfo } from "@kit.BasicServicesKit";
 import bundleManager from "@ohos.bundle.bundleManager";
-import { JSON, taskpool } from "@kit.ArkTS";
+import { taskpool } from "@kit.ArkTS";
 import { picker, fileIo } from "@kit.CoreFileKit";
 import fs from "@ohos.file.fs";
 import { photoAccessHelper } from "@kit.MediaLibraryKit";
 
 const OPENGTX_DISABLE_FLAG = "/data/storage/el2/base/disable_opengtx";
+const PERFORMANCE_CLASS_NAMES: string[] = ["HighLevel", "MediumLevel", "LowLevel"];
 
 @Concurrent
 function clearCacheDir(cacheDir: string): void {
   try {
-    if (fileIo.accessSync(cacheDir)) {
-      const files = fileIo.listFileSync(cacheDir);
-      for (const file of files) {
-        const filePath = cacheDir + "/" + file;
-        const stat = fileIo.statSync(filePath);
-        if (stat.isDirectory()) {
-          fileIo.rmdirSync(filePath);
-        } else {
-          fileIo.unlinkSync(filePath);
-        }
+    if (!fileIo.accessSync(cacheDir)) {
+      return;
+    }
+    for (const file of fileIo.listFileSync(cacheDir)) {
+      const filePath = `${cacheDir}/${file}`;
+      if (fileIo.statSync(filePath).isDirectory()) {
+        fileIo.rmdirSync(filePath);
+      } else {
+        fileIo.unlinkSync(filePath);
       }
     }
   } catch (err) {
@@ -29,8 +29,7 @@ function clearCacheDir(cacheDir: string): void {
 }
 
 export function executeClearCacheTask(cacheDir: string): void {
-  const task = new taskpool.Task(clearCacheDir, cacheDir);
-  taskpool.execute(task).catch((err: BusinessError) => {
+  taskpool.execute(new taskpool.Task(clearCacheDir, cacheDir)).catch((err: BusinessError) => {
     console.error("Cache cleanup task failed: " + JSON.stringify(err));
   });
 }
@@ -41,7 +40,7 @@ export interface FileSaveResult {
 }
 
 export function startBrowsableAbility(context: common.UIAbilityContext, url: string): void {
-  let want: Want = {
+  const want: Want = {
     action: "ohos.want.action.viewData",
     entities: ["entity.system.browsable"],
     uri: url,
@@ -53,9 +52,17 @@ export function startBrowsableAbility(context: common.UIAbilityContext, url: str
     console.error(`Failed to startAbility. Code: ${err.code}, message: ${err.message}`);
   });
 }
+
+async function closeQuietly(file: fs.File | number, label: string): Promise<void> {
+  try {
+    await fs.close(file);
+  } catch (err) {
+    console.error(`${label}: ${(err as BusinessError).message}`);
+  }
+}
+
 //todo: judge if OpenHarmony or HarmonyOS, if OpenHarmony, then disable OpenGTX
 //these function are used to debug enable/disable OpenGTX
-
 function isOpenGtxDisabled(): boolean {
   try {
     return fs.accessSync(OPENGTX_DISABLE_FLAG);
@@ -72,11 +79,8 @@ export function setOpenGtxEnabled(enabled: boolean): boolean {
         fs.unlinkSync(OPENGTX_DISABLE_FLAG);
       }
     } else {
-      const file = fs.openSync(
-        OPENGTX_DISABLE_FLAG,
-        fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC,
-      );
-      fs.closeSync(file);
+      const mode = fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC;
+      fs.closeSync(fs.openSync(OPENGTX_DISABLE_FLAG, mode));
     }
     return true;
   } catch (error) {
@@ -87,32 +91,16 @@ export function setOpenGtxEnabled(enabled: boolean): boolean {
 
 export function getSystemInfo(): string {
   try {
-    let bundleInfo = bundleManager.getBundleInfoForSelfSync(
+    const bundleInfo = bundleManager.getBundleInfoForSelfSync(
       bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION,
     );
-    let appBundleName = bundleInfo.name;
-    let deviceModel = deviceInfo.marketName;
-    let osVersion = deviceInfo.displayVersion;
-    let sdkApi = deviceInfo.sdkApiVersion;
-    let cpuModel = deviceInfo.chipType || "Unknown CPU";
-    let performanceClassNum = deviceInfo.performanceClass;
-    let devicetype = deviceInfo.deviceType;
-    let performanceClassStr = "unknown";
-    switch (performanceClassNum) {
-      case 0:
-        performanceClassStr = "HighLevel";
-        break;
-      case 1:
-        performanceClassStr = "MediumLevel";
-        break;
-      case 2:
-        performanceClassStr = "LowLevel";
-        break;
-      default:
-        performanceClassStr = "unknown";
-    }
-    const openGtxState = !isOpenGtxDisabled() ? "OpenGTX:on" : "OpenGTX:off";
-    const systemInfo = `${deviceModel}(${devicetype})${osVersion}(${sdkApi}) ${cpuModel}(${performanceClassStr}) ${appBundleName} ${openGtxState} 测试版本，不代表最终游戏品质`;
+    const performanceClass = PERFORMANCE_CLASS_NAMES[deviceInfo.performanceClass] ?? "unknown";
+    const openGtxState = isOpenGtxDisabled() ? "OpenGTX:off" : "OpenGTX:on";
+    const systemInfo =
+      `${deviceInfo.marketName}(${deviceInfo.deviceType})` +
+      `${deviceInfo.displayVersion}(${deviceInfo.sdkApiVersion})` +
+      ` ${deviceInfo.chipType || "Unknown CPU"}(${performanceClass})` +
+      ` ${bundleInfo.name} ${openGtxState} 测试版本，不代表最终游戏品质`;
     console.error("system info:" + systemInfo);
     return systemInfo;
   } catch (error) {
@@ -137,13 +125,26 @@ export async function copyUriToTempFile(
     return undefined;
   } finally {
     if (sourceFile) {
-      try {
-        await fs.close(sourceFile);
-      } catch (err) {
-        console.error(`Failed to close file: ${(err as BusinessError).message}`);
-      }
+      await closeQuietly(sourceFile, "Failed to close file");
     }
   }
+}
+
+async function pickPhotoUri(): Promise<string | undefined> {
+  const options = new photoAccessHelper.PhotoSelectOptions();
+  options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+  options.maxSelectNumber = 1;
+  const result = await new photoAccessHelper.PhotoViewPicker().select(options);
+  const uris = result?.photoUris;
+  return uris && uris.length > 0 ? uris[0] : undefined;
+}
+
+async function pickDocumentUri(): Promise<string | undefined> {
+  const options = new picker.DocumentSelectOptions();
+  //options.fileSuffixFilters = [".pez", ".zip"];
+  options.maxSelectNumber = 1;
+  const result = await new picker.DocumentViewPicker().select(options);
+  return result && result.length > 0 ? result[0] : undefined;
 }
 
 export async function callFilePickerAndProcess(
@@ -152,32 +153,10 @@ export async function callFilePickerAndProcess(
   isPhoto: boolean = false,
 ): Promise<void> {
   try {
-    if (isPhoto) {
-      let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
-      photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-      photoSelectOptions.maxSelectNumber = 1;
-      let photoPicker = new photoAccessHelper.PhotoViewPicker();
-      const photoSelectResult = await photoPicker.select(photoSelectOptions);
-      if (
-        photoSelectResult &&
-        photoSelectResult.photoUris &&
-        photoSelectResult.photoUris.length > 0
-      ) {
-        const uri = photoSelectResult.photoUris[0];
-        const localPath = await copyUriToTempFile(context, uri);
-        xComponentContext!.setChosenFile(localPath);
-      }
-    } else {
-      let documentPicker = new picker.DocumentViewPicker();
-      let documentSelectOptions = new picker.DocumentSelectOptions();
-      //documentSelectOptions.fileSuffixFilters = [".pez", ".zip"];
-      documentSelectOptions.maxSelectNumber = 1;
-      const documentSelectResult = await documentPicker.select(documentSelectOptions);
-      if (documentSelectResult && documentSelectResult.length > 0) {
-        const uri = documentSelectResult[0];
-        const localPath = await copyUriToTempFile(context, uri);
-        xComponentContext!.setChosenFile(localPath);
-      }
+    const uri = isPhoto ? await pickPhotoUri() : await pickDocumentUri();
+    if (uri) {
+      const localPath = await copyUriToTempFile(context, uri);
+      xComponentContext!.setChosenFile(localPath);
     }
   } catch (err) {
     const error = err as BusinessError;
@@ -208,16 +187,8 @@ export async function exportCrashLog(crashLogPath: string): Promise<boolean> {
       await fs.copyFile(src.fd, saveResult.fd);
       return true;
     } finally {
-      try {
-        await fs.close(src);
-      } catch (err) {
-        console.error(`exportCrashLog close src failed: ${(err as BusinessError).message}`);
-      }
-      try {
-        await fs.close(saveResult.fd);
-      } catch (err) {
-        console.error(`exportCrashLog close dst failed: ${(err as BusinessError).message}`);
-      }
+      await closeQuietly(src, "exportCrashLog close src failed");
+      await closeQuietly(saveResult.fd, "exportCrashLog close dst failed");
     }
   } catch (err) {
     console.error(`exportCrashLog error: ${(err as BusinessError).message}`);
@@ -229,25 +200,22 @@ export async function callFilePickerSaveFile(
   filename: string,
 ): Promise<FileSaveResult | undefined> {
   try {
-    let documentSaveOptions = new picker.DocumentSaveOptions();
-    documentSaveOptions.newFileNames = [filename];
-    let documentPicker = new picker.DocumentViewPicker();
-    const documentSaveResult = await documentPicker.save(documentSaveOptions);
-    if (documentSaveResult && documentSaveResult.length > 0) {
-      const uri = documentSaveResult[0];
-      let file: fs.File | null = null;
-      try {
-        file = await fs.open(uri, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
-        const fd = file.fd;
-        return { uri, fd };
-      } catch (openErr) {
-        console.error(
-          `callFilePickerSaveFile failed to open file: ${(openErr as BusinessError).message}`,
-        );
-        return { uri, fd: -1 };
-      }
+    const saveOptions = new picker.DocumentSaveOptions();
+    saveOptions.newFileNames = [filename];
+    const saveResult = await new picker.DocumentViewPicker().save(saveOptions);
+    if (!saveResult || saveResult.length === 0) {
+      return undefined;
     }
-    return undefined;
+    const uri = saveResult[0];
+    try {
+      const file = await fs.open(uri, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
+      return { uri, fd: file.fd };
+    } catch (openErr) {
+      console.error(
+        `callFilePickerSaveFile failed to open file: ${(openErr as BusinessError).message}`,
+      );
+      return { uri, fd: -1 };
+    }
   } catch (err) {
     const error = err as BusinessError;
     console.error(`callFilePickerSaveFile error: ${error.code}, ${error.message}`);
