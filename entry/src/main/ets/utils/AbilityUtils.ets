@@ -134,17 +134,29 @@ async function pickPhotoUri(): Promise<string | undefined> {
   const options = new photoAccessHelper.PhotoSelectOptions();
   options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
   options.maxSelectNumber = 1;
-  const result = await new photoAccessHelper.PhotoViewPicker().select(options);
-  const uris = result?.photoUris;
-  return uris && uris.length > 0 ? uris[0] : undefined;
+  try {
+    const result = await new photoAccessHelper.PhotoViewPicker().select(options);
+    const uris = result?.photoUris;
+    return uris && uris.length > 0 ? uris[0] : undefined;
+  } catch (err) {
+    const error = err as BusinessError;
+    console.error(`pick photo error: ${error.code}, ${error.message}`);
+    return undefined;
+  }
 }
 
 async function pickDocumentUri(): Promise<string | undefined> {
   const options = new picker.DocumentSelectOptions();
   //options.fileSuffixFilters = [".pez", ".zip"];
   options.maxSelectNumber = 1;
-  const result = await new picker.DocumentViewPicker().select(options);
-  return result && result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await new picker.DocumentViewPicker().select(options);
+    return result && result.length > 0 ? result[0] : undefined;
+  } catch (err) {
+    const error = err as BusinessError;
+    console.error(`pick document error: ${error.code}, ${error.message}`);
+    return undefined;
+  }
 }
 
 export async function callFilePickerAndProcess(

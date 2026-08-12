@@ -120,12 +120,16 @@ struct Index {
           return;
         }
         exportCrashLog(currentLog).then((ok) => {
-          prompt.showToast({
-            message: ok
-              ? $r("app.string.crash_toast_export_success")
-              : $r("app.string.crash_toast_export_failed"),
-            duration: ok ? 1500 : 2000,
-          });
+          try {
+            prompt.showToast({
+              message: ok
+                ? $r("app.string.crash_toast_export_success")
+                : $r("app.string.crash_toast_export_failed"),
+              duration: ok ? 1500 : 2000,
+            });
+          } catch (err) {
+            console.error("Failed to show toast: " + JSON.stringify(err));
+          }
         });
       })
       .catch((error: BusinessError) => {
